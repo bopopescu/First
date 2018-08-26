@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jul 23 19:37:08 2018
-
+test
 @author: Administrator
-"""
+""" 
 import logging
 import math
 import os
@@ -25,7 +25,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import QTableWidgetItem as Qitem
 
-import Func
+import Func 
 import gs
 import pyomo.environ as pe
 import scipy.optimize as op
