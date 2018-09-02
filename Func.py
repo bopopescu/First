@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Sat Jun 23 09:55:11 2018
 
@@ -18,6 +18,11 @@ from sympy import plot_implicit
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from PyQt5.QtWidgets import QTableWidgetItem as Qitem
 from PyQt5.QtGui import QColor,QBrush
+import openpyxl as xl
+from openpyxl.utils import get_column_letter
+from openpyxl import worksheet
+#from openpyxl.utils import range_boundarie
+
 
 def writeNewValueGUI(tableWidget,i,j,value):
     newItem = Qitem(str(value))
@@ -506,6 +511,28 @@ def read(sheet,r,c):
         value = 0
     return str(value)
 #write(excelPath,Sheetname,startRow,startCol)
+
+def writeborder( sheet, r1, c1,r2,c2 ):
+#==============================================================================
+#     header_fill = PatternFill( start_color='FFFFFF', end_color='FFFFFF', fill_type='solid' )
+#     header_font = Font( size=11, bold=True )
+      #header_align = Alignment( vertical='center', horizontal='center' )
+    header_side = Side( border_style='thin', color='000000' )
+    header_borderL = Border( left=header_side, right=None, top=header_side, bottom=header_side )
+    header_borderR = Border( left=None, right=header_side, top=header_side, bottom=header_side )
+    header_borderC = Border( left=None, right=None, top=header_side, bottom=header_side )
+    for r in range(r1+1,r2):
+        for c in range(c1+1,c2):
+            sheet.cell( column=c, row=r ).border = header_borderC
+
+    sheet.cell(column = c1,row = r1).border = header_borderL
+    sheet.cell(column = c2, row =r2) .border =header_borderR
+
+     
+#     sheet.cell( column=c, row=r ).fill = header_fill
+#     sheet.cell( column=c, row=r ).font = header_font
+#     sheet.cell( column=c, row=r ).alignment = header_align
+      #sheet.cell( column=c, row=r ).border = header_border
 
 def update_lines(num, dataLines, lines, ax):
     for line, data in zip(lines, dataLines):
