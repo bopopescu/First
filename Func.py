@@ -1,32 +1,84 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Created on Sat Jun 23 09:55:11 2018
 
 @author: Administrator
 """
-import numpy as np
-import matplotlib.pyplot as plt
+import json
 import math
-import sympy as sp 
-import scipy.optimize as op 
-import gs
+
+import matplotlib.pyplot as plt
+import numpy as np
+import openpyxl as xl
+import scipy.optimize as op
+import sympy as sp
+from openpyxl import worksheet
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+from PyQt5.QtGui import QBrush, QColor
+from PyQt5.QtWidgets import QTableWidgetItem as Qitem
+from sympy import plot_implicit
 #==============================================================================
 # import pyomo.environ as pe
 #==============================================================================
 from sympy.parsing.sympy_parser import parse_expr
-from sympy import plot_implicit
-from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
-from PyQt5.QtWidgets import QTableWidgetItem as Qitem
-from PyQt5.QtGui import QColor,QBrush
-import openpyxl as xl
-from openpyxl.utils import get_column_letter
-from openpyxl import worksheet
+
 #from openpyxl.utils import range_boundarie
 
+def extractattr(c):
+    name = dir(c)
+    delname=[]
+    for item in name:
+        if item[0]=='_':
+            delname.append(item)
+    for item in delname:
+        name.remove(item)
+    return name
 
-def writeNewValueGUI(tableWidget,i,j,value):
+def writeInputjson(jsonPath,input,gs):
+    nameInput = extractattr(input)
+    nameError = extractattr(input.errorP)
+    DictInput  ={}
+    DictErrorP ={}
+    DictErrorN ={}
+    for var in nameError:
+        DictErrorP[var]= getattr(gs.errorP, var)
+        DictErrorN[var] = getattr(gs.errorN, var)
+    for variable in nameInput:
+        DictInput[variable]=getattr(gs,variable)
+    DictInput['errorP'] = DictErrorP
+    DictInput['errorN'] = DictErrorN
+    jStr = json.dumps(DictInput)
+    with open(jsonPath,'w') as f:
+        f.write(jStr)
+
+def LoadInputJson(jsonPath,input,gs):
+    f = open(jsonPath,'r')
+    content = f.read()
+    Dict = json.loads(content)
+    DictErrorP = Dict['errorP'] 
+    DictErrorN = Dict['errorN']
+    #Dict.pop('errorP')
+    #Dict.pop('errorN')
+
+    nameInput = extractattr(input)
+    nameInput.remove('errorP')
+    nameInput.remove('errorN')
+
+    nameError = extractattr(input.errorP)
+
+    for var in nameError:
+        setattr(gs.errorP,var,DictErrorP[var])
+        setattr(gs.errorN,var,DictErrorN[var])
+    for variable in nameInput:
+        setattr(gs,variable,Dict[variable])
+    
+def  writeNewValueGUI(tableWidget,i,j,value,bounds=[ None, None]):
     newItem = Qitem(str(value))
-    newItem.setBackground(QColor(0,255,0)) #RGB ,yellow
+    if (float(value)<=bounds[1]) & (float(value) >=bounds[0]): #in bounds
+        newItem.setBackground(QColor(0,255,0)) #RGB ,green
+    else:
+        newItem.setBackground(QColor(255,0,0)) #RGB ,red
     tableWidget.setItem(i,j,newItem)
 
 def setColorGUI(tableWidget,i,j):
@@ -37,7 +89,7 @@ def setColorGUI(tableWidget,i,j):
 def wipAngle(xs2,xs1,KBEW): # xs2-xs1 according to KBEW
         if KBEW =='+x':
             w2opt = xs2 - xs1
-        elif gs.KBEW =='-x':
+        elif KBEW =='-x':
             w2opt =  360-xs2- xs1
         else:
             print('pls define KBEW')
@@ -490,7 +542,7 @@ def write( sheet, r, c, value ):
 #     sheet.cell( column=c, row=r ).fill = header_fill
 #     sheet.cell( column=c, row=r ).font = header_font
 #     sheet.cell( column=c, row=r ).alignment = header_align
-      sheet.cell( column=c, row=r ).border = header_border
+#     sheet.cell( column=c, row=r ).border = header_border
 #==============================================================================
 def writeResult( sheet, r, c, value ):
 #==============================================================================
@@ -512,27 +564,34 @@ def read(sheet,r,c):
     return str(value)
 #write(excelPath,Sheetname,startRow,startCol)
 
-def writeborder( sheet, r1, c1,r2,c2 ):
-#==============================================================================
-#     header_fill = PatternFill( start_color='FFFFFF', end_color='FFFFFF', fill_type='solid' )
-#     header_font = Font( size=11, bold=True )
-      #header_align = Alignment( vertical='center', horizontal='center' )
+def writeborder( sheet, listLoc ):
+    [r1,c1,r2,c2]=listLoc
     header_side = Side( border_style='thin', color='000000' )
     header_borderL = Border( left=header_side, right=None, top=header_side, bottom=header_side )
     header_borderR = Border( left=None, right=header_side, top=header_side, bottom=header_side )
     header_borderC = Border( left=None, right=None, top=header_side, bottom=header_side )
-    for r in range(r1+1,r2):
+    header_borderLU = Border( left=header_side, right=None, top=header_side )
+    header_borderLD = Border( left=header_side, right=None, bottom=header_side )
+    header_borderRU = Border( left=None, right=header_side, top=header_side )
+    header_borderRD = Border( left=None, right=header_side, bottom=header_side )
+    header_borderU = Border( left=None, right=None, top=header_side)
+    header_borderD = Border( left=None, right=None, bottom=header_side )
+    if r1==r2:
+       
         for c in range(c1+1,c2):
-            sheet.cell( column=c, row=r ).border = header_borderC
+            sheet.cell( column=c, row=r1 ).border = header_borderC
 
-    sheet.cell(column = c1,row = r1).border = header_borderL
-    sheet.cell(column = c2, row =r2) .border =header_borderR
+        sheet.cell(column = c1,row = r1).border = header_borderL
+        sheet.cell(column = c2, row =r1) .border =header_borderR
+    else:
+        for c in range(c1+1,c2):
+            sheet.cell( column=c, row=r1 ).border = header_borderU
+            sheet.cell( column=c, row=r2 ).border = header_borderD
+        sheet.cell(column = c1,row = r1).border = header_borderLU
+        sheet.cell(column = c1,row = r2).border = header_borderLD
+        sheet.cell(column = c2,row = r1).border = header_borderRU
+        sheet.cell(column = c2,row = r2).border = header_borderRD
 
-     
-#     sheet.cell( column=c, row=r ).fill = header_fill
-#     sheet.cell( column=c, row=r ).font = header_font
-#     sheet.cell( column=c, row=r ).alignment = header_align
-      #sheet.cell( column=c, row=r ).border = header_border
 
 def update_lines(num, dataLines, lines, ax):
     for line, data in zip(lines, dataLines):

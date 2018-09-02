@@ -25,6 +25,7 @@ import numpy as np
 import openpyxl as xl
 import pandas as pd
 import sympy as sp
+import scipy.optimize as op
 from mpl_toolkits.mplot3d import proj3d
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from PyQt5.QtWidgets import QTableWidgetItem as Qitem
@@ -56,16 +57,18 @@ class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
         self.addTab(self.WindowExtreme,u"Output-ExtremeValues")
         self.addTab(self.WindowTolerance,u"Tolerance Calculation")
 
-# =============================================================================
-        self.WindowInput.LoadButton.clicked.connect(self.WindowInput.LoadClicked)
-        self.WindowInput.LoadButton.clicked.connect(self.WindowOpt.OptClicked)
-        self.WindowInput.LoadButton.clicked.connect(self.WindowInput.UpdateOptValue)
-
+        self.WindowInput.LoadButton.clicked.connect(self.WindowInput.LoadClicked) # laod data
+        self.WindowInput.LoadButton.clicked.connect(self.WindowOpt.OptClicked) # optimization
+        self.WindowInput.LoadButton.clicked.connect(self.WindowInput.UpdateOptValue) # set items in input sheet
+        self.WindowInput.LoadButton.clicked.connect(self.WindowOpt.setOptItem) # set items in optimization sheet
 
         self.WindowInput.OutputButton.clicked.connect(self.WindowInput.close)
         self.WindowInput.OutputButton.clicked.connect(self.WindowAlpha.show)
-        self.WindowInput.OutputButton.clicked.connect(self.resetAlpha)
-        
+        self.WindowInput.OutputButton.clicked.connect(self.resetAlpha)       # move to output sheet
+        self.WindowOpt.pushButton.clicked.connect(self.WindowOpt.OptClicked)
+        self.WindowOpt.pushButton.clicked.connect(self.WindowOpt.setOptItem)
+
+        self.WindowAlpha.TableButton.clicked.connect(self.WindowAlpha.alphaTable)
         self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowExtreme.ExtremeTable)
         self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowAlpha.close)
         self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowExtreme.show)
@@ -75,7 +78,8 @@ class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
         self.WindowInput.ToleranceButton.clicked.connect(self.WindowTolerance.show)
         self.WindowInput.ToleranceButton.clicked.connect(self.resetTolerance)
         
-        
+        self.WindowTolerance.ButtonCal.clicked.connect(self.WindowTolerance.Tolerance)
+
         self.WindowInput.SaveButton.clicked.connect(self.writeMainCordinate)
         self.WindowInput.SaveButton.clicked.connect(self.writeDetailCordinate)
         self.WindowInput.SaveButton.clicked.connect(self.WindowInput.updateNewsheet)
@@ -179,7 +183,7 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
     def __init__(self,parent=None):
         super(MainWindow_Tolerance,self).__init__(parent)
         self.setupUi(self)
-        self.ButtonCal.clicked.connect(self.Tolerance)
+        
     def Tolerance(self):
         noCrank = self.comboLink.currentText() #Master,Slave
         obj = self.comboObj.currentText() #wipping angle,NYS_T
@@ -331,14 +335,10 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         super(MainWindow_alphaNumeric,self).__init__(parent)
         self.setupUi(self)
         
-        self.TableButton.clicked.connect(self.alphaTable)
-    def alphaTable(self):
         
+    def alphaTable(self):
         print('-----------------------start map calculation-------------------------')
         time_start = time.time()
-        #constrain:
-        #NYS-A ef CD
-        #==============================================================================
 
         output=[]
         output2=[]
@@ -400,50 +400,50 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         out['beta_ss']=beta_ssList
         out2['beta_s2']=beta_s2List
         out2['beta_ss2']=beta_ss2List
+         
+        @staticmethod
+        def plot(out,gs):
+            x=out['alpha']
+            plt.figure(1)
+            ax=plt.subplot(2,2,1)
+            plt.plot(x,out['beta'],'k--',label='Beta')
+            plt.plot(x,out2['beta2'],'r--',label='Gamma')
+            plt.legend()
 
-        #plot
-        x=out['alpha']
-        plt.figure(1)
-        ax=plt.subplot(2,2,1)
-        plt.plot(x,out['beta'],'k--',label='Beta')
-        plt.plot(x,out2['beta2'],'r--',label='Gamma')
-        plt.legend()
+            ax=plt.subplot(2,2,2)
+            plt.plot(x,out['beta_s'],'k--',label='B-S')
+            plt.plot(x,out2['beta_s2'],'r:',label='G-S')
+            plt.legend()
 
-        ax=plt.subplot(2,2,2)
-        plt.plot(x,out['beta_s'],'k--',label='B-S')
-        plt.plot(x,out2['beta_s2'],'r:',label='G-S')
-        plt.legend()
+            ax=plt.subplot(2,2,3)
+            l3=plt.plot(x,out['beta_ss'],'k--',label='B-SS')
+            l4=plt.plot(x,out2['beta_ss2'],'r:',label='G-SS')
+            plt.legend()
+            plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_Angle'+gs.styleTime+'.jpg')
 
-        ax=plt.subplot(2,2,3)
-        l3=plt.plot(x,out['beta_ss'],'k--',label='B-SS')
-        l4=plt.plot(x,out2['beta_ss2'],'r:',label='G-SS')
-        plt.legend()
-        plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_Angle'+gs.styleTime+'.jpg')
+            plt.figure(2)
+            ax=plt.subplot(2,2,1)
+            plt.plot(x,out['NYS_T'],'k--',label='NYS_T')
+            plt.plot(x,out2['NYS_T2'],'r:',label='NYS_T2')
+            plt.legend()
 
-        plt.figure(2)
-        ax=plt.subplot(2,2,1)
-        plt.plot(x,out['NYS_T'],'k--',label='NYS_T')
-        plt.plot(x,out2['NYS_T2'],'r:',label='NYS_T2')
-        plt.legend()
+            ax=plt.subplot(2,2,2)
+            plt.plot(x,out['NYK_T'],'k--',label='NYK_T')
+            plt.plot(x,out2['NYK_T2'],'r:',label='NYK_T2')
+            plt.legend()
 
-        ax=plt.subplot(2,2,2)
-        plt.plot(x,out['NYK_T'],'k--',label='NYK_T')
-        plt.plot(x,out2['NYK_T2'],'r:',label='NYK_T2')
-        plt.legend()
+            ax=plt.subplot(2,2,3)
+            plt.plot(x,out['NYS_A'],'k--',label='NYS_A')
+            plt.plot(x,out2['NYS_A2'],'r:',label='NYS_A2')
+            plt.legend()
 
-        ax=plt.subplot(2,2,3)
-        plt.plot(x,out['NYS_A'],'k--',label='NYS_A')
-        plt.plot(x,out2['NYS_A2'],'r:',label='NYS_A2')
-        plt.legend()
+            ax=plt.subplot(2,2,4)
+            plt.plot(x,out['NYK_A'],'k--',label='NYK_A')
+            plt.plot(x,out2['NYK_A2'],'r:',label='NYK_A2')
+            plt.legend()
+            plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_NY'+gs.styleTime+'.jpg')
 
-        ax=plt.subplot(2,2,4)
-        plt.plot(x,out['NYK_A'],'k--',label='NYK_A')
-        plt.plot(x,out2['NYK_A2'],'r:',label='NYK_A2')
-        plt.legend()
-        plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_NY'+gs.styleTime+'.jpg')
-
-        #end plot
-
+        # =============================================================================
         #end plot
         cols =['alpha','beta','beta_s','beta_ss','NYS_T','NYS_A','NYK_T','NYK_A',]
         cols2=['beta2','beta_s2','beta_ss2','NYS_T2','NYS_A2','NYK_T2','NYK_A2']
@@ -664,16 +664,69 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         
         plt.legend()
         plt.show()
-        return gs.line_ani
+        #return gs.line_ani
 
     
 class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
     def __init__(self,parent=None):
         super(MainWindow_Opt,self).__init__(parent)
         self.setupUi(self)
-        self.pushButton.clicked.connect(self.OptClicked)
 
-        
+    def setOptItem(self):
+                self.TableOpt.setItem(0,0,Qitem('%.4f'%gs.EDb))
+                self.TableOpt.setItem(0,1,Qitem('%.4f'%gs.CDb))
+                self.TableOpt.setItem(0,2,Qitem('%.4f'%gs.xs1b)) 
+                self.TableOpt.setItem(0,3,Qitem('%.4f'%gs.xs2b))
+                self.TableOpt.setItem(0,4,Qitem('%.4f'%gs.w2optb))
+                self.TableOpt.setItem(0,5,Qitem('%.4f'%(gs.M1NYS_Tb)))
+                self.TableOpt.setItem(0,6,Qitem('%.4f'%(gs.M2NYS_Tb)))
+                self.TableOpt.setItem(0,7,Qitem('%.4f'%(gs.M1NYS_Tb+gs.M2NYS_Tb)))
+
+                self.TableOpt.setItem(1,0,Qitem('%.1f'%gs.ED))
+                self.TableOpt.setItem(1,1,Qitem('%.1f'%gs.CD))
+                self.TableOpt.setItem(1,2,Qitem('%.2f'%gs.xs1))
+                self.TableOpt.setItem(1,3,Qitem('%.2f'%gs.xs2))
+                self.TableOpt.setItem(1,4,Qitem('%.2f'%gs.w2opt))
+                self.TableOpt.setItem(1,5,Qitem('%.2f'%(gs.M1NYS_T)))
+                self.TableOpt.setItem(1,6,Qitem('%.2f'%(gs.M2NYS_T)))
+                self.TableOpt.setItem(1,7,Qitem('%.2f'%(gs.M1NYS_T+gs.M2NYS_T)))
+                self.TableOpt.setItem(2,1,Qitem('%.2f'%gs.w2opt))
+                self.TableOpt.setItem(2,6,Qitem('%.2f'%gs.M1NYS_T))
+                self.TableOpt.setItem(2,7,Qitem('%.2f'%gs.M2NYS_T))
+
+                self.TableOpt2.setItem(0,1,Qitem('%.4f'%gs.CD2b))
+                self.TableOpt2.setItem(0,2,Qitem('%.4f'%gs.xs12b))
+                self.TableOpt2.setItem(0,3,Qitem('%.4f'%gs.xs22b))
+                self.TableOpt2.setItem(0,4,Qitem('%.4f'%gs.w3optb))
+                self.TableOpt2.setItem(0,5,Qitem('%.4f'%gs.S1NYS_Tb))
+                self.TableOpt2.setItem(0,6,Qitem('%.4f'%gs.S2NYS_Tb))
+                self.TableOpt2.setItem(0,7,Qitem('%.4f'%(gs.S1NYS_Tb+gs.S2NYS_Tb)))
+
+                if gs.MechanicType =='Center':
+                    self.TableOpt2.setItem(0,0,Qitem('%.4f'%gs.ED2b))
+                else:
+                    self.TableOpt2.setItem(0,0,Qitem('%.4f'%gs.BC2b))
+                self.TextW2.setText('%.4f'%gs.w2Target)
+                self.TextW3.setText('%.4f'%gs.w3Target)
+                if gs.MechanicType =='Center':
+
+                    self.TableOpt2.setItem(1,0,Qitem('%.1f'%gs.ED2))
+                    self.textEdit_3.setText('ED')
+                else:
+
+                    self.textEdit_3.setText('BC')
+                    self.TableOpt2.setItem(1,0,Qitem('%.1f'%gs.BC2))
+
+                self.TableOpt2.setItem(1,1,Qitem('%.1f'%gs.CD2))
+                self.TableOpt2.setItem(1,2,Qitem('%.2f'%gs.xs12))
+                self.TableOpt2.setItem(1,3,Qitem('%.2f'%gs.xs22))
+                self.TableOpt2.setItem(1,4,Qitem('%.2f'%gs.w3opt))
+                self.TableOpt2.setItem(1,5,Qitem('%.2f'%gs.S1NYS_T))
+                self.TableOpt2.setItem(1,6,Qitem('%.2f'%gs.S2NYS_T))
+                self.TableOpt2.setItem(1,7,Qitem('%.2f'%(gs.S1NYS_T+gs.S2NYS_T)))
+                self.TableOpt2.setItem(2,1,Qitem('%.2f'%gs.w3opt))
+                self.TableOpt2.setItem(2,6,Qitem('%.2f'%gs.S1NYS_T))
+                self.TableOpt2.setItem(2,7,Qitem('%.2f'%gs.S2NYS_T))
     def OptClicked(self):
         ab = gs.B-gs.A
         ab2 = gs.B2-gs.A2
@@ -708,113 +761,126 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
         [equal1,equal2,NYK_T,NYS_T,Dbx,Dby,Dbz] = Func.OutputSymbol  (gs.A,gs.B,gs.E,gs.F)
         [equal12,equal22,NYK_T2,NYS_T2,Dbx2,Dby2,Dbz2] = Func.OutputSymbol(gs.A2,gs.B2,gs.E2,gs.F2)
 
-
         # Dbx=repr(Dbx2).replace('xCrank','model2.outCrank2').replace('xLink','model2.link2').replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12')
         # Dby=repr(Dby2).replace('xCrank','model2.outCrank2').replace('xLink','model2.link2').replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12')
         # Dbz=repr(Dbz2).replace('xCrank','model2.outCrank2').replace('xLink','model2.link2').replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12')
 
         # generating equation
         #optimize
-        if gs.MechanicType =='Center':
-            Equal1 = repr(equal1[0]).replace('xCrank', 'model.outCrank').replace('xLink',
-                                                                                 'model.link')  # link length equation for master link
-            Equal2 = repr(equal2).replace('xCrank', 'model.outCrank').replace('sqrt',
-                                                                              'pe.sqrt')  # bc parrel bd equation for master link
-            Equal12 = repr(equal12[0]).replace('xCrank', 'model.outCrank2').replace('xLink', 'model.link2')
-                                                                                                                       # link length equation for slave link
-            Equal22 = repr(equal22).replace('xCrank', 'model.outCrank2').replace('sqrt',
-                                                                              'pe.sqrt')  # bc parrel bd equation for slave link
-                                                                              
-            F_M11 = Equal1.replace('sin(xs)', 'model.sxs1').replace('cos(xs)', 'model.cxs1').replace('sin(xm)',
-                                                                                                     'model.sxm1').replace(
-                'cos(xm)', 'model.cxm1')  # 11 means equation 1 for  position 1
-            F_M12 = Equal1.replace('sin(xs)', 'model.sxs2').replace('cos(xs)', 'model.cxs2').replace('sin(xm)',
-                                                                                                     'model.sxm2').replace(
-                'cos(xm)', 'model.cxm2')
-            
-            F_M11n = Equal1.replace('sin(xs)', 'model.sxs1n').replace('cos(xs)', 'model.cxs1n').replace('sin(xm)',
-                                                                                                     'model.sxm1n').replace(
-                'cos(xm)', 'model.cxm1n')  #
-            
-            F_M21 = Equal2.replace('sin(xs)', 'model.sxs1').replace('cos(xs)', 'model.cxs1').replace('sin(xm)',
-                                                                                                     'model.sxm1').replace(
-                'cos(xm)', 'model.cxm1')
-            F_M22 = Equal2.replace('sin(xs)', 'model.sxs2').replace('cos(xs)', 'model.cxs2').replace('sin(xm)',
-                                                                                                     'model.sxm2').replace(
-                'cos(xm)', 'model.cxm2')
-            F_M21n = Equal2.replace('sin(xs)', 'model.sxs1n').replace('cos(xs)', 'model.cxs1n').replace('sin(xm)',
-                                                                                                     'model.sxm1n').replace(
-                'cos(xm)', 'model.cxm1n')
-            
-            F_S11 = Equal12.replace('sin(xs)', 'model.sxs12').replace('cos(xs)', 'model.cxs12').replace('sin(xm)',
-                                                                                                          'model.sxm12').replace(
-                'cos(xm)', 'model.cxm12')
-            F_S12 = Equal12.replace('sin(xs)', 'model.sxs22').replace('cos(xs)', 'model.cxs22').replace('sin(xm)',
-                                                                                                          'model.sxm22').replace(
-                'cos(xm)', 'model.cxm22')  # two position start and OWL
-            F_S21 = Equal22.replace('sin(xs)', 'model.sxs12').replace('cos(xs)', 'model.cxs12').replace('sin(xm)',
-                                                                                                     'model.sxm12').replace(
-                'cos(xm)', 'model.cxm12')
-            F_S22 = Equal22.replace('sin(xs)', 'model.sxs22').replace('cos(xs)', 'model.cxs22').replace('sin(xm)',
-                                                                                                     'model.sxm22').replace(
-                'cos(xm)', 'model.cxm22')
-                
-            
-            F_M1NYK_T = repr(NYK_T).replace('sin(xm)', 'model.sxm1').replace('cos(xm)', 'model.cxm1').replace('acos',
-                                                                                                              'pe.acos').replace(
-                'xCrank', 'model.outCrank').replace('acos', 'pe.acos').replace('sin(xm)', 'model.sxm1').replace('cos(xm)',
-                                                                                                                'model.cxm1').replace(
-                'sqrt', 'pe.sqrt').replace('sin(xs)', 'model.sxs1').replace('cos(xs)', 'model.cxs1')
-            F_M2NYK_T = repr(NYK_T).replace('sin(xm)', 'model.sxm2').replace('cos(xm)', 'model.cxm2').replace('acos',
-                                                                                                              'pe.acos').replace(
-                'xCrank', 'model.outCrank').replace('acos', 'pe.acos').replace('sin(xm)', 'model.sxm1').replace('cos(xm)',
-                                                                                                                'model.cxm1').replace(
-                'sqrt', 'pe.sqrt').replace('sin(xs)', 'model.sxs2').replace('cos(xs)', 'model.cxs2')
-            F_M1NYS_T = repr(NYS_T).replace('sin(xs)', 'model.sxs1').replace('cos(xs)', 'model.cxs1').replace('xCrank',
-                                                                                                              'model.outCrank').replace(
-                'acos', 'pe.acos').replace('sin(xm)', 'model.sxm1').replace('cos(xm)', 'model.cxm1').replace('sqrt', 'pe.sqrt')
-            F_M2NYS_T = repr(NYS_T).replace('sin(xs)', 'model.sxs2').replace('cos(xs)', 'model.cxs2').replace('xCrank',
-                                                                                                              'model.outCrank').replace(
-                'acos', 'pe.acos').replace('sin(xm)', 'model.sxm2').replace('cos(xm)', 'model.cxm2').replace('sqrt', 'pe.sqrt')
-            F_S1NYS_T = repr(NYS_T2).replace('sin(xs)', 'model.sxs12').replace('cos(xs)', 'model.cxs12').replace('xCrank',
-                                                                                                                   'model.outCrank2').replace(
-                'acos', 'pe.acos').replace('sin(xm)', 'model.sxm12').replace('cos(xm)', 'model.cxm12').replace('sqrt',
-                                                                                                                 'pe.sqrt').replace(
-                'BC', 'model.BC2')
-            F_S2NYS_T = repr(NYS_T2).replace('sin(xs)', 'model.sxs22').replace('cos(xs)', 'model.cxs22').replace('xCrank',
-                                                                                                                   'model.outCrank2').replace(
-                'acos', 'pe.acos').replace('sin(xm)', 'model.sxm22').replace('cos(xm)', 'model.cxm22').replace('sqrt',
-                                                                                                                 'pe.sqrt').replace(
-                'BC', 'model.BC2')
-            F_S1NYK_T = repr(NYK_T2).replace('sin(xm)', 'model.sxm12').replace('cos(xm)', 'model.cxm12').replace('sin(xs)',
-                                                                                                                   'model.sxs12').replace(
-                'cos(xs)', 'model.cxs12').replace('acos', 'pe.acos').replace('xCrank', 'model.outCrank2').replace('sqrt',
-                                                                                                                    'pe.sqrt').replace(
-                'BC', 'model.BC2')
-            F_S2NYK_T = repr(NYK_T2).replace('sin(xm)', 'model.sxm22').replace('cos(xm)', 'model.cxm22').replace('sin(xs)',
-                                                                                                                   'model.sxs22').replace(
-                'cos(xs)', 'model.cxs22').replace('acos', 'pe.acos').replace('xCrank', 'model.outCrank2').replace('sqrt',
-                                                                                                                    'pe.sqrt').replace(
-                'BC', 'model.BC2')
+        Equal1 = repr(equal1[0]).replace('xCrank','model.outCrank').replace('xLink','model.link') # link length equation for master link
+        Equal2 = repr(equal2).replace('xCrank','model.outCrank').replace('sqrt','pe.sqrt') # bc parrel bd equation for master link
+                                                                            
+        F_M11=Equal1.replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1') # 11 means equation 1 for start position
+        F_M12=Equal1.replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2').replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2')
+        F_M13=Equal1.replace('sin(xs)','model.sxs3').replace('cos(xs)','model.cxs3').replace('sin(xm)','model.sxm3').replace('cos(xm)','model.cxm3') # 11 means equation 1 for start position
+        F_M21=Equal2.replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1')
+        F_M22=Equal2.replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2').replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2')
+        F_M23=Equal2.replace('sin(xs)','model.sxs3').replace('cos(xs)','model.cxs3').replace('sin(xm)','model.sxm3').replace('cos(xm)','model.cxm3')
+        F_M1NYK_T= repr(NYK_T).replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('acos','pe.acos').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('sqrt','pe.sqrt').replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1')
+        F_M2NYK_T= repr(NYK_T).replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2').replace('acos','pe.acos').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('sqrt','pe.sqrt').replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2')
+        F_M1NYS_T= repr(NYS_T).replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('sqrt','pe.sqrt')
+        F_M2NYS_T= repr(NYS_T).replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2').replace('sqrt','pe.sqrt')
+        
+        if gs.MechanicType =='Center':# only one model , master and slave is optimizaed together
+            Equal12 = repr(equal12[0]).replace('xCrank','model.outCrank2').replace('xLink','model.link2').replace('BC','model.bc2') #link length equation for slave link
+            Equal22 = repr(equal22).replace('xCrank', 'model.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model.bc2') #model.bc2 TBD for center
+            F_S11=Equal12.replace('sin(xs)','model.sxs12').replace('cos(xs)','model.cxs12').replace('sin(xm)','model.sxm12').replace('cos(xm)','model.cxm12')
+            F_S12=Equal12.replace('sin(xs)','model.sxs22').replace('cos(xs)','model.cxs22').replace('sin(xm)','model.sxm22').replace('cos(xm)','model.cxm22') # two position start and OWL
+            F_S1NYS_T= repr(NYS_T2).replace('sin(xs)','model.sxs12').replace('cos(xs)','model.cxs12').replace('xCrank','model.outCrank2').replace('acos','pe.acos').replace('sin(xm)','model.sxm12').replace('cos(xm)','model.cxm12').replace('sqrt','pe.sqrt').replace('BC','model.bc2')
+            F_S2NYS_T= repr(NYS_T2).replace('sin(xs)','model.sxs22').replace('cos(xs)','model.cxs22').replace('xCrank','model.outCrank2').replace('acos','pe.acos').replace('sin(xm)','model.sxm22').replace('cos(xm)','model.cxm22').replace('sqrt','pe.sqrt').replace('BC','model.bc2')
+            F_S1NYK_T= repr(NYK_T2).replace('sin(xm)','model.sxm12').replace('cos(xm)','model.cxm12').replace('sin(xs)','model.sxs12').replace('cos(xs)','model.cxs12').replace('acos','pe.acos').replace('xCrank','model.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model.bc2')
+            F_S2NYK_T= repr(NYK_T2).replace('sin(xm)','model.sxm22').replace('cos(xm)','model.cxm22').replace('sin(xs)','model.sxs22').replace('cos(xs)','model.cxs22').replace('acos','pe.acos').replace('xCrank','model.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model.bc2')
+            F_S21 = Equal22.replace('sin(xs)', 'model.sxs12').replace('cos(xs)', 'model.cxs12').replace('sin(xm)','model.sxm12').replace('cos(xm)', 'model.cxm12')
+            F_S22 = Equal22.replace('sin(xs)', 'model.sxs22').replace('cos(xs)', 'model.cxs22').replace('sin(xm)', 'model.sxm22').replace('cos(xm)', 'model.cxm22')
+        else:# two model, master and slave is optimized seperately
+            Equal12 = repr(equal12[0]).replace('xCrank','model2.outCrank2').replace('xLink','model2.link2').replace('BC','model2.bc2') #link length equation for slave link
+            Equal22 = repr(equal22).replace('xCrank', 'model2.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model2.bc2') #model.bc2 TBD for center
+            F_S11 = Equal12.replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12')
+            F_S12 = Equal12.replace('sin(xs)','model2.sxs22').replace('cos(xs)','model2.cxs22').replace('sin(xm)','model2.sxm22').replace('cos(xm)','model2.cxm22') # two position start and OWL
+            F_S1NYS_T= repr(NYS_T2).replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('xCrank','model2.outCrank2').replace('acos','pe.acos').replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12').replace('sqrt','pe.sqrt').replace('BC','model2.bc2')
+            F_S2NYS_T= repr(NYS_T2).replace('sin(xs)','model2.sxs22').replace('cos(xs)','model2.cxs22').replace('xCrank','model2.outCrank2').replace('acos','pe.acos').replace('sin(xm)','model2.sxm22').replace('cos(xm)','model2.cxm22').replace('sqrt','pe.sqrt').replace('BC','model2.bc2')
+            F_S1NYK_T= repr(NYK_T2).replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12').replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('acos','pe.acos').replace('xCrank','model2.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model2.bc2')
+            F_S2NYK_T= repr(NYK_T2).replace('sin(xm)','model2.sxm22').replace('cos(xm)','model2.cxm22').replace('sin(xs)','model2.sxs22').replace('cos(xs)','model2.cxs22').replace('acos','pe.acos').replace('xCrank','model2.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model2.bc2')
+        # general equation
+        model = pe.ConcreteModel()
+        model.link = pe.Var(initialize = gs.CD,bounds=(3*gs.BC,10*gs.BC) ) #length of link 
+        model.outCrank = pe.Var(initialize =gs.ED,bounds = (0.5*gs.BC,2*gs.BC)) # length of output crank 
+        
+        model.cxm1 = pe.Var(initialize = math.sqrt(3)/2,bounds=(-1,1))
+        model.cxm2 = pe.Var(initialize = -math.sqrt(3)/2,bounds=(-1,1))
+        if gs.ParkWhere =='+y':
+            model.sxm1 =  pe.Var(initialize =-0.5,bounds=(-1,0)) 
+            model.sxm2 =  pe.Var(initialize =0.5,bounds=(-1,1)) 
+        else:
+            model.sxm1 =  pe.Var(initialize =0.5,bounds=(0,1)) 
+            model.sxm2 =  pe.Var(initialize =-0.5,bounds=(-1,1)) 
+        
+        if gs.KBEW =='-x':
+            model.sxs1 = pe.Var(initialize=0.5, bounds=(0, 1))
+            model.cxs1 = pe.Var(initialize=-math.sqrt(3) / 2, bounds=(-1, 0))
+            model.sxs2 = pe.Var(initialize=-0.5, bounds=(-1, 0))
+            model.cxs2 = pe.Var(initialize=-math.sqrt(3) / 2, bounds=(-1, 0))
+        elif gs.KBEW=='+x':
+            model.sxs1 = pe.Var(initialize=-0.5, bounds=(-1, 0))
+            model.cxs1 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))
+            model.sxs2 = pe.Var(initialize=0.5, bounds=( 0 , 1))
+            model.cxs2 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))    
 
-            model = pe.ConcreteModel()
-            model.link = pe.Var(initialize= gs.CD, bounds=(4.4 * gs.BC, 10 * gs.BC))  # length of link
-            model.outCrank = pe.Var(initialize= gs.ED, bounds=(0.25 * gs.BC, 4 * gs.BC))  # length of output crank
-            model.sxm1 = pe.Var(initialize=0.5, bounds=(-1, 1))
-            model.cxm1 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(-1, 1))
-            model.sxm2 = pe.Var(initialize=-0.5, bounds=(-1, 1))
-            model.cxm2 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(-1, 1))
-            if gs.KBEW =='-x':
-                model.sxs1 = pe.Var(initialize=0.5, bounds=(0, 1))
-                model.cxs1 = pe.Var(initialize=-math.sqrt(3) / 2, bounds=(-1, 0))
-                model.sxs2 = pe.Var(initialize=-0.5, bounds=(-1, 0))
-                model.cxs2 = pe.Var(initialize=-math.sqrt(3) / 2, bounds=(-1, 0))
-            elif gs.KBEW=='+x':
-                model.sxs1 = pe.Var(initialize=-0.5, bounds=(-1, 0))
-                model.cxs1 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))
-                model.sxs2 = pe.Var(initialize=0.5, bounds=( 0 , 1))
-                model.cxs2 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))    
+        model.Con = pe.ConstraintList()
+        model.Con.add(expr=(model.sxm2 ** 2 + model.cxm2 ** 2 - 1) == 0)
+        model.Con.add(expr=(model.sxm1 ** 2 + model.cxm1 ** 2 - 1) == 0)
+        model.Con.add(expr=(model.sxs1 ** 2 + model.cxs1 ** 2 - 1) == 0)
+        model.Con.add(expr=(model.sxs2 ** 2 + model.cxs2 ** 2 - 1) == 0)
+        model.Con.add(eval(F_M11)==0) # meet basic physical constrain
+        model.Con.add(eval(F_M12)==0) # meet basic physical constrain
+
+        if (Clock==1):
+            model.Con.add(model.sxs2*model.cxs1-model.cxs2*model.sxs1>=0)
+        elif(Clock==-1) :
+            model.Con.add(model.sxs2*model.cxs1-model.cxs2*model.sxs1<=0)
+        else:
+            print(gs.KBEW)
+
+
+        if (gs.DriveType=='Standard'):
+            # standard system, 1 and 2 are in inlien position
+            model.Con.add(1000*(eval(F_M22)**2-1)==0) #
+            model.Con.add(1000*(eval(F_M21)**2-1)==0)
             
+        elif (gs.DriveType=='Reversing'): #
+            # reversing system , 1 and 2 not in inline position , 3 is inline position
+            model.cxm3 = pe.Var(initialize = -math.sqrt(3)/2,bounds=(-1,1))
+            if gs.ParkWhere =='+y':
+                model.sxm3 =  pe.Var(initialize =-0.5,bounds=(-1,0)) 
+            else:
+                model.sxm3 =  pe.Var(initialize =0.5,bounds=(0,1)) 
+            
+
+            model.sxs3 = pe.Var(initialize=-0.5, bounds=(-1, 1))
+            model.cxs3 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(-1, 1))
+
+            model.Con.add(eval(F_M13)==0)
+            model.Con.add(1000*(eval(F_M23)**2-1)==0) 
+            model.Con.add(expr=(model.sxm3**2+model.cxm3**2-1)==0)
+            model.Con.add(expr=(model.sxs3**2+model.cxs3**2-1)==0)
+            
+            model.Con.add(eval(F_M1NYK_T)+eval(F_M2NYK_T)==0)
+            cOff =model.cxm1*model.cxm3+model.sxm1*model.sxm3 #offset =xm1-xm3
+            sOff = model.sxm1*model.cxm3- model.cxm1*model.sxm3
+
+            cAlfa =model.cxm2*model.cxm1+model.sxm2*model.sxm1 #alpha =xm2-xm1
+            sAlfa = model.sxm2*model.cxm1-model.cxm2*model.sxm1
+            
+            #NYK_T = eval(F_M1NYK_T)
+            #sNYK_T = pe.sqrt(1-eval(F_M1NYK_T)*eval(F_M1NYK_T))
+            model.Con.add(expr = cAlfa>=math.cos(170*math.pi/180.)) # alfa <170
+            model.Con.add(expr = sOff*cAlfa+cOff*sAlfa >=0) # off+alfa<180
+            model.Con.add(expr = sOff>=0  ) # off alfa must be the same sign to avoid cross inline position
+            #model.Con.add(expr = sNYK_T*cxm21+cNYK_T*sxm21 >=0) # alpha+offsetangle <180, cannot cover inline position
+            #model.Con.add(eval(F_M1NYK_T) ** 2 <= (math.cos(14 * math.pi / 180)) ** 2) #NYK_T<76
+
+
+        if gs.MechanicType =='Center':                                   
             model.link2 = pe.Var(initialize=gs.CD2, bounds=(4.4 * gs.BC2, 10 * gs.BC2))  # length of link
             model.outCrank2 = pe.Var(initialize=gs.ED2, bounds=(0.25*gs.BC2, 4*gs.BC2))  # length of output crank
             model.sxm12 = pe.Var(initialize=0, bounds=(-1, 1))
@@ -831,56 +897,31 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
                 model.cxs12 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))
                 model.sxs22 = pe.Var(initialize=0.5, bounds=( 0 , 1))
                 model.cxs22 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))  
-            
-            model.BC2 = pe.Var(initialize=gs.BC, bounds=(gs.BC, gs.BC))
-            
-            # --- master link
-            # 1n represents inline position
-            # 1 represents starts position ,depends on measured from
-            # 2 represents OWL position
-            # wiping angel should be angle from 1 to 2
-            model.Con = pe.ConstraintList()
+            model.bc2 = pe.Var(initialize=gs.BC, bounds=(gs.BC, gs.BC))
             model.obj = pe.Objective(
                 expr=((model.cxs2 * model.cxs1 + model.sxs2 * model.sxs1 - math.cos(gs.w2)) ** 2)  # minmize wipping angle error
             +(model.cxs22 * model.cxs12 + model.sxs22 * model.sxs12 - math.cos(gs.w3)) ** 2)  # the lowest wipping angle requirement
             # =============================================================================
             model.Con.add ((model.cxs2 * model.cxs1 + model.sxs2 * model.sxs1 - math.cos(gs.w2)) ** 2<=0.01)
             model.Con.add((model.cxs22 * model.cxs12 + model.sxs22 * model.sxs12 - math.cos(gs.w3)) ** 2<=0.01)
-            if Clock:
-                model.Con.add(model.sxs2*model.cxs1-model.sxs1*model.cxs2>=0)
-            else:
-                model.Con.add(model.sxs2*model.cxs1-model.sxs1*model.cxs2<=0)
-            if Clock2:
-                model.Con.add(model.sxs22*model.cxs12-model.sxs12*model.cxs22>=0)
-            else:
-                print('pls specicy clock')
-                
-            model.Con.add(eval(F_M11) == 0)
-            model.Con.add(eval(F_M12) == 0)  # physical requirement
-            model.Con.add(1000 * (eval(F_M21)**2 - 1) == 0)
-            model.Con.add(1000 * (eval(F_M22)**2 - 1) == 0)  #
-            model.Con.add(eval(F_S11) == 0)
-            model.Con.add(eval(F_S12) == 0)  # physical requirement
-            model.Con.add(1000 * (eval(F_S21)**2 - 1) == 0)
-            model.Con.add(1000 * (eval(F_S22)**2- 1) == 0)  #
-            
-            model.Con.add(expr=(model.sxm2 ** 2 + model.cxm2 ** 2 - 1) == 0)
-            model.Con.add(expr=(model.sxm1 ** 2 + model.cxm1 ** 2 - 1) == 0)
-            model.Con.add(expr=(model.sxs1 ** 2 + model.cxs1 ** 2 - 1) == 0)
-            model.Con.add(expr=(model.sxs2 ** 2 + model.cxs2 ** 2 - 1) == 0)
-            
             model.Con.add(expr=(model.sxm22 ** 2 + model.cxm22 ** 2 - 1) == 0)
             model.Con.add(expr=(model.sxm12 ** 2 + model.cxm12 ** 2 - 1) == 0)
             model.Con.add(expr=(model.sxs12 ** 2 + model.cxs12 ** 2 - 1) == 0)
             model.Con.add(expr=(model.sxs22 ** 2 + model.cxs22 ** 2 - 1) == 0)
-            # =============================================================================
+            if Clock2:
+                model.Con.add(model.sxs22*model.cxs12-model.sxs12*model.cxs22>=0)
+            else:
+                print('pls specicy clock')
+
+            model.Con.add(eval(F_S11) == 0)
+            model.Con.add(eval(F_S12) == 0)  # physical requirement
+            model.Con.add(1000 * (eval(F_S21)**2 - 1) == 0)
+            model.Con.add(1000 * (eval(F_S22)**2- 1) == 0)  #
             model.Con.add((eval(F_M1NYS_T)) + (eval(F_M2NYS_T)) == 0)
             model.Con.add((eval(F_S1NYS_T)) + (eval(F_S2NYS_T)) == 0)
-            # =============================================================================
-            # =============================================================================
-            # model.Con.add(eval(F_M1NYS_T) ** 2 <= (math.cos(40 * math.pi / 180)) ** 2)  # NYS_T<50
-            # model.Con.add(eval(F_S1NYS_T) ** 2 <= (math.cos(40 * math.pi / 180)) ** 2)  # NYS_T<50
-            model.Con.add(expr=model.cxm1*model.cxm12+model.sxm1*model.sxm12>=math.cos(8*math.pi/180))
+            model.Con.add(eval(F_M1NYS_T) ** 2 <= (math.cos(40 * math.pi / 180)) ** 2)  # NYS_T<50
+            model.Con.add(eval(F_S1NYS_T) ** 2 <= (math.cos(40 * math.pi / 180)) ** 2)  # NYS_T<50
+            # model.Con.add(expr=model.cxm1*model.cxm12+model.sxm1*model.sxm12>=math.cos(8*math.pi/180))
             # =============================================================================
             M1NYS_Tv = eval(F_M1NYS_T)
             M2NYS_Tv = eval(F_M2NYS_T)
@@ -920,7 +961,9 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             gs.ED = (pe.value(model.outCrank))
             M1NYS_T = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYS_Tv)))
             M2NYS_T = Func.degree(math.pi / 2 - math.acos(pe.value(M2NYS_Tv)))
-            
+            M1NYK_T = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYK_Tv)))
+            M1NYK_T = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYK_Tv)))
+
             sxm12 = pe.value(model.sxm12)
             cxm12 = pe.value(model.cxm12)
             sxm22 = pe.value(model.sxm22)
@@ -929,9 +972,7 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             cxs12 = pe.value(model.cxs12)
             sxs22 = pe.value(model.sxs22)
             cxs22 = pe.value(model.cxs22)
-            # =============================================================================
-            
-            # =============================================================================
+
             gs.xs22 = Func.getDegree(cxs22, sxs22)
             gs.xs12 = Func.getDegree(cxs12, sxs12)
             gs.xm22 = Func.getDegree(cxm22, sxm22)
@@ -942,124 +983,18 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             # =============================================================================
             S1NYS_T = Func.degree(math.pi / 2 - math.acos(pe.value(S1NYS_Tv)))
             S2NYS_T = Func.degree(math.pi / 2 - math.acos(pe.value(S2NYS_Tv)))
-
+            S1NYK_T = Func.degree(math.pi / 2 - math.acos(pe.value(S1NYK_Tv)))
+            S2NYK_T = Func.degree(math.pi / 2 - math.acos(pe.value(S2NYK_Tv)))
         else: # Master-Slave
                     #--- master link
-            Equal1 = repr(equal1[0]).replace('xCrank','model.outCrank').replace('xLink','model.link') # link length equation for master link
-            Equal2 = repr(equal2).replace('xCrank','model.outCrank').replace('sqrt','pe.sqrt') # bc parrel bd equation for master link
-            Equal12 = repr(equal12[0]).replace('xCrank','model2.outCrank2').replace('xLink','model2.link2').replace('BC','model2.bc2') #link length equation for slave link
-
-            F_M11=Equal1.replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1') # 11 means equation 1 for start position
-            F_M12=Equal1.replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2').replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2')
-            F_M13=Equal1.replace('sin(xs)','model.sxs3').replace('cos(xs)','model.cxs3').replace('sin(xm)','model.sxm3').replace('cos(xm)','model.cxm3') # 11 means equation 1 for start position
-
-            F_M21=Equal2.replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1')
-            F_M22=Equal2.replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2').replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2')
-            F_M23=Equal2.replace('sin(xs)','model.sxs3').replace('cos(xs)','model.cxs3').replace('sin(xm)','model.sxm3').replace('cos(xm)','model.cxm3')
-
-            F_S11=Equal12.replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12')
-            F_S12=Equal12.replace('sin(xs)','model2.sxs22').replace('cos(xs)','model2.cxs22').replace('sin(xm)','model2.sxm22').replace('cos(xm)','model2.cxm22') # two position start and OWL
-
-            F_M1NYK_T= repr(NYK_T).replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('acos','pe.acos').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('sqrt','pe.sqrt').replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1')
-            F_M2NYK_T= repr(NYK_T).replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2').replace('acos','pe.acos').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('sqrt','pe.sqrt').replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2')
-            F_M1NYS_T= repr(NYS_T).replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('sqrt','pe.sqrt')
-            F_M2NYS_T= repr(NYS_T).replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2').replace('sqrt','pe.sqrt')
-            F_S1NYS_T= repr(NYS_T2).replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('xCrank','model2.outCrank2').replace('acos','pe.acos').replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12').replace('sqrt','pe.sqrt').replace('BC','model2.bc2')
-            F_S2NYS_T= repr(NYS_T2).replace('sin(xs)','model2.sxs22').replace('cos(xs)','model2.cxs22').replace('xCrank','model2.outCrank2').replace('acos','pe.acos').replace('sin(xm)','model2.sxm22').replace('cos(xm)','model2.cxm22').replace('sqrt','pe.sqrt').replace('BC','model2.bc2')
-            F_S1NYK_T= repr(NYK_T2).replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12').replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('acos','pe.acos').replace('xCrank','model2.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model2.bc2')
-            F_S2NYK_T= repr(NYK_T2).replace('sin(xm)','model2.sxm22').replace('cos(xm)','model2.cxm22').replace('sin(xs)','model2.sxs22').replace('cos(xs)','model2.cxs22').replace('acos','pe.acos').replace('xCrank','model2.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model2.bc2')
-            
-            model = pe.ConcreteModel()
-            model.link = pe.Var(initialize = gs.CD,bounds=(3*gs.BC,10*gs.BC) ) #length of link 
-            model.outCrank = pe.Var(initialize =gs.ED,bounds = (0.5*gs.BC,2*gs.BC)) # length of output crank 
-            # =============================================================================
-            # =============================================================================
-            
-            model.cxm1 = pe.Var(initialize = math.sqrt(3)/2,bounds=(-1,1))
-            model.cxm2 = pe.Var(initialize = -math.sqrt(3)/2,bounds=(-1,1))
-            if gs.ParkWhere =='+y':
-                model.sxm1 =  pe.Var(initialize =-0.5,bounds=(-1,0)) 
-                model.sxm2 =  pe.Var(initialize =0.5,bounds=(-1,1)) 
-            else:
-                model.sxm1 =  pe.Var(initialize =0.5,bounds=(0,1)) 
-                model.sxm2 =  pe.Var(initialize =-0.5,bounds=(-1,1)) 
-            
-            if gs.KBEW =='-x':
-                model.sxs1 = pe.Var(initialize=0.5, bounds=(0, 1))
-                model.cxs1 = pe.Var(initialize=-math.sqrt(3) / 2, bounds=(-1, 0))
-                model.sxs2 = pe.Var(initialize=-0.5, bounds=(-1, 0))
-                model.cxs2 = pe.Var(initialize=-math.sqrt(3) / 2, bounds=(-1, 0))
-            elif gs.KBEW=='+x':
-                model.sxs1 = pe.Var(initialize=-0.5, bounds=(-1, 0))
-                model.cxs1 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))
-                model.sxs2 = pe.Var(initialize=0.5, bounds=( 0 , 1))
-                model.cxs2 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))    
-
-            model.Con = pe.ConstraintList()
             model.obj=pe.Objective(expr=(model.cxs2*model.cxs1+model.sxs2*model.sxs1-math.cos(gs.w2))**2) # minmize wipping angle error
-            
             model.Con.add(expr=(model.cxs2 * model.cxs1 + model.sxs2 * model.sxs1 - math.cos(
                     gs.w2)) ** 2 <= 0.001)  # the lowest wipping angle requirement
-
-            if (Clock==1):
-                model.Con.add(model.sxs2*model.cxs1-model.cxs2*model.sxs1>=0)
-            elif(Clock==-1) :
-                model.Con.add(model.sxs2*model.cxs1-model.cxs2*model.sxs1<=0)
-            else:
-                print(gs.KBEW)
-
-            model.Con.add(eval(F_M11)==0) # meet basic physical constrain
-            model.Con.add(eval(F_M12)==0) # meet basic physical constrain
-            #TBD: MechanicType: Center,Master-Slave
             # =============================================================================
-            if (gs.DriveType=='Standard'):
-                # standard system, 1 and 2 are in inlien position
-                model.Con.add(1000*(eval(F_M22)**2-1)==0) #
-                model.Con.add(1000*(eval(F_M21)**2-1)==0)
-                
-            elif (gs.DriveType=='Reversing'): #TBD
-                # reversing system , 1 and 2 not in inline position , 3 is inline position
-                model.cxm3 = pe.Var(initialize = -math.sqrt(3)/2,bounds=(-1,1))
-                if gs.ParkWhere =='+y':
-                    model.sxm3 =  pe.Var(initialize =-0.5,bounds=(-1,0)) 
-                else:
-                    model.sxm3 =  pe.Var(initialize =0.5,bounds=(0,1)) 
-                
-
-                model.sxs3 = pe.Var(initialize=-0.5, bounds=(-1, 1))
-                model.cxs3 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(-1, 1))
-
-                model.Con.add(eval(F_M13)==0)
-                model.Con.add(1000*(eval(F_M23)**2-1)==0) 
-                model.Con.add(expr=(model.sxm3**2+model.cxm3**2-1)==0)
-                model.Con.add(expr=(model.sxs3**2+model.cxs3**2-1)==0)
-                
-                model.Con.add(eval(F_M1NYK_T)+eval(F_M2NYK_T)==0)
-                cOff =model.cxm1*model.cxm3+model.sxm1*model.sxm3 #offset =xm1-xm3
-                sOff = model.sxm1*model.cxm3- model.cxm1*model.sxm3
-
-                cAlfa =model.cxm2*model.cxm1+model.sxm2*model.sxm1 #alpha =xm2-xm1
-                sAlfa = model.sxm2*model.cxm1-model.cxm2*model.sxm1
-                
-                #NYK_T = eval(F_M1NYK_T)
-                #sNYK_T = pe.sqrt(1-eval(F_M1NYK_T)*eval(F_M1NYK_T))
-                model.Con.add(expr = cAlfa>=math.cos(170*math.pi/180.)) # alfa <170
-                model.Con.add(expr = sOff*cAlfa+cOff*sAlfa >=0) # off+alfa<180
-                model.Con.add(expr = sOff>=0  ) # off alfa must be the same sign to avoid cross inline position
-                #model.Con.add(expr = sNYK_T*cxm21+cNYK_T*sxm21 >=0) # alpha+offsetangle <180, cannot cover inline position
-                #model.Con.add(eval(F_M1NYK_T) ** 2 <= (math.cos(14 * math.pi / 180)) ** 2) #NYK_T<76
-
-                    
-            else:
-                print('please configure if is standard system ')
-            model.Con.add(expr=(model.sxm2**2+model.cxm2**2-1)==0)
-            model.Con.add(expr=(model.sxm1**2+model.cxm1**2-1)==0)
-            model.Con.add(expr=(model.sxs1**2+model.cxs1**2-1)==0)
-            model.Con.add(expr=(model.sxs2**2+model.cxs2**2-1)==0)
-            model.Con.add((eval(F_M1NYS_T))+(eval(F_M2NYS_T))==0)
+            model.Con.add((eval(F_M1NYS_T)) + (eval(F_M2NYS_T)) == 0)
             model.Con.add(eval(F_M1NYS_T)**2<=(math.cos(40*math.pi/360))**2)#NYS_T<50
-            tt1=eval(F_M1NYS_T)
-            tt2=eval(F_M2NYS_T)
+
+
             # =============================================================================
             opt = pe.SolverFactory('ipopt')
             result_obj1 = opt.solve(model) 
@@ -1081,25 +1016,22 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             cxs2=pe.value(model.cxs2)
 
             gs.xs1b=Func.getDegree(cxs1,sxs1)
-            gs.xm1=Func.getDegree(cxm1,sxm1)
-            gs.xm2=Func.getDegree(cxm2,sxm2)
+            gs.xm1b=Func.getDegree(cxm1,sxm1)
+            gs.xm2b=Func.getDegree(cxm2,sxm2)
             gs.xs2b=Func.getDegree(cxs2,sxs2)
             if gs.DriveType=='Reversing':
                 sxm3=pe.value(model.sxm3)
                 cxm3=pe.value(model.cxm3)
                 sxs3=pe.value(model.sxs3)
                 cxs3=pe.value(model.cxs3)
-                gs.xs3=Func.getDegree(cxs3,sxs3)
-                gs.xm3=Func.getDegree(cxm3,sxm3)
+                gs.xs3b=Func.getDegree(cxs3,sxs3)
+                gs.xm3b=Func.getDegree(cxm3,sxm3)
 
 
             M1NYS_Tv = eval(F_M1NYS_T)
             M2NYS_Tv = eval(F_M2NYS_T)
             M1NYK_Tv = eval(F_M1NYK_T)
             M2NYK_Tv = eval(F_M2NYK_T)
-            
-            
-            # =============================================================================
 
             gs.CDb=  (pe.value((model.link)))
             gs.EDb=(pe.value(model.outCrank))
@@ -1110,45 +1042,23 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
 
             if gs.DriveType=='Reversing':
                 
-                gs.Alfab = gs.xm2-gs.xm1
-                gs.offsetAngleb = gs.xm1-gs.xm3
+
+                gs.Alfab = gs.xm2b-gs.xm1b
+                gs.offsetAngleb = gs.xm1b-gs.xm3b
             else:
-                gs.offsetAngle = 0
-                gs.Alfa = 360
+                gs.offsetAngleb = 0
+                gs.Alfab = 360
 
             gs.w2optb = Func.wipAngle(gs.xs2b,gs.xs1b,gs.KBEW)
-            print('CD=%.4f'% gs.CDb +'\tED=%.4f'% gs.EDb +'\tNYS_T1=%.4f'% gs.M1NYS_Tb +'\tNYS_T2=%.4f'% gs.M2NYS_Tb)
-            print('NYK_T1={:.4f},  NYK_T2= {:.4f} ' .format(gs.M1NYK_Tb,gs.M2NYK_Tb))
-            print('w2=%.4f'%gs.w2optb+'\tw2Target=%.4f'%(180/math.pi*gs.w2))
-            if gs.DriveType=='Reversing':
-                print('offsetAngle = {:.4f}, Reversing angle={:.4f}'.format(gs.offsetAngle,gs.Alfa))
             
-            self.TableOpt.setItem(0,0,Qitem('%.4f'%gs.EDb))
-            self.TableOpt.setItem(0,1,Qitem('%.4f'%gs.CDb))
-            self.TableOpt.setItem(0,2,Qitem('%.4f'%gs.xs1b))
-            self.TableOpt.setItem(0,3,Qitem('%.4f'%gs.xs2b))
-            self.TableOpt.setItem(0,4,Qitem('%.4f'%gs.w2optb))
-            self.TableOpt.setItem(0,5,Qitem('%.4f'%(gs.M1NYS_Tb)))
-            self.TableOpt.setItem(0,6,Qitem('%.4f'%(gs.M2NYS_Tb)))
-            self.TableOpt.setItem(0,7,Qitem('%.4f'%(gs.M1NYS_Tb+gs.M2NYS_Tb)))
-            Func.write(gs.sheet2, 2, 12, gs.startFrom)
-            Func.write(gs.sheet2,8,6,gs.w2Target)
-            Func.write(gs.sheet2,16,2,gs.EDb)
-            Func.write(gs.sheet2,16,3,gs.CDb)
-            Func.write(gs.sheet2,16,5,'%.4f'% gs.xs1b)
-            Func.write(gs.sheet2,16,6,'%.4f'% gs.xs2b)
-            Func.write(gs.sheet2,16,7,'%.4f'% gs.w2opt)
-            Func.write(gs.sheet2,16,9,'%.4f'%M1NYS_T)
-            Func.write(gs.sheet2,16,10,'%.4f'%M2NYS_T)
-            Func.write(gs.sheet2,16,11,'%.4f'%(M1NYS_T+M2NYS_T))
 
-
-            print('-------------------------After rounding---------------------------')
             gs.CD=round(gs.CDb,1)
             gs.ED=round(gs.EDb,1)
-            gs.Alfa = round(gs.Alfab,1)
-            gs.offsetAngle = round(gs.offsetAngle,1)
+            gs.xm1 = gs.xm1b
+            gs.xm2 = gs.xm2b
             if gs.DriveType=='Reversing':
+                gs.Alfa = round(gs.Alfab,1)
+                gs.offsetAngle = round(gs.offsetAngleb,1)
                 Equal1inline = repr(equal1[0]).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC') # link length equation for master link
                 Equal2inline = repr(equal2).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC')
                 EqualInline = [Equal1inline,Equal2inline]
@@ -1163,11 +1073,11 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
 
                 #[xim2,xis2]= op.fsolve(Finline,[math.pi,math.pi])
                 #gs.xm1 = gs.xm3+gs.offsetAngle
+                gs.xm1 = gs.xm1b
                 gs.xm2 = gs.xm1+gs.Alfa
             else:
                 gs.offsetAngle = 0
                 gs.Alfa = 360
-            
 
             gs.Ra_Rb = float(gs.BC/gs.CD)
             outM1=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm1,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Master -UWL,[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
@@ -1175,50 +1085,21 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
 
             gs.xs1 = outM1[1]
             gs.xs2 = outM2[1]
-            cxs1 = math.cos(Func.rad(gs.xs1))
-            cxs2 = math.cos(Func.rad(gs.xs2))
-            sxs1 = math.sin(Func.rad(gs.xs1))
-            sxs2 = math.sin(Func.rad(gs.xs2))
+            # cxs1 = math.cos(Func.rad(gs.xs1))
+            # cxs2 = math.cos(Func.rad(gs.xs2))
+            # sxs1 = math.sin(Func.rad(gs.xs1))
+            # sxs2 = math.sin(Func.rad(gs.xs2))
             gs.w2opt = Func.wipAngle(gs.xs2,gs.xs1,gs.KBEW)
 
-
-                
-            
             gs.M1NYS_T=outM1[2]
             gs.M2NYS_T=outM2[2]
             gs.M1NYK_T=outM1[4]
             gs.M2NYK_T=outM2[4]
-            Func.write(gs.sheet2,17,2,gs.ED)
-            Func.write(gs.sheet2,17,3,gs.CD)
-            Func.write(gs.sheet2,17,5,'%.4f'%outM1[1])
-            Func.write(gs.sheet2,17,6,'%.4f'%outM2[1])
-            Func.write(gs.sheet2,17,7,'%.4f'%gs.w2opt)
-            Func.write(gs.sheet2,17,9,'%.4f'%M1NYS_T)
-            Func.write(gs.sheet2,17,10,'%.4f'%M2NYS_T)
-            Func.write(gs.sheet2,17,11,'%.4f'%(M1NYS_T+M2NYS_T))
-            Func.write(gs.sheet2,19,3,'%.4f'%gs.w2opt)
-            Func.write(gs.sheet2,19,9,'%.4f'%M1NYS_T)
-            Func.write(gs.sheet2,19,10,'%.4f'%M2NYS_T)
-            self.TableOpt.setItem(1,0,Qitem('%.1f'%gs.ED))
-            self.TableOpt.setItem(1,1,Qitem('%.1f'%gs.CD))
-            self.TableOpt.setItem(1,2,Qitem('%.2f'%outM1[1]))
-            self.TableOpt.setItem(1,3,Qitem('%.2f'%outM2[1]))
-            self.TableOpt.setItem(1,4,Qitem('%.2f'%gs.w2opt))
-            self.TableOpt.setItem(1,5,Qitem('%.2f'%(M1NYS_T)))
-            self.TableOpt.setItem(1,6,Qitem('%.2f'%(M2NYS_T)))
-            self.TableOpt.setItem(1,7,Qitem('%.2f'%(M1NYS_T+M2NYS_T)))
-            self.TableOpt.setItem(2,1,Qitem('%.2f'%gs.w2opt))
-            self.TableOpt.setItem(2,6,Qitem('%.2f'%M1NYS_T))
-            self.TableOpt.setItem(2,7,Qitem('%.2f'%M2NYS_T))
-            print('After Rounding:CD=%.1f'% gs.CD +'\tED=%.1f'% gs.ED +'\tNYS_T1=%.4f'% M1NYS_T +'\tNYS_T2=%.4f'% M2NYS_T)
-            print('NYK_T1={:.4f},  NYK_T2= {:.4f} ' .format(M1NYK_T,M2NYK_T))
-            print('w2=%.4f'%gs.w2opt+'\tw2Target=%.4f'%(180/math.pi*gs.w2))
-            if gs.DriveType=='Reversing':
-                print('offsetAngle = {:.4f}, Reversing angle={:.4f}'.format(gs.offsetAngle,gs.Alfa))
+
             #=============================================================================
 
             #slave  link
-            print('------------------------------slave link info------------------------')
+            print('------------------slave crank info---------------')
             model2 = pe.ConcreteModel()
             model2.link2 = pe.Var(initialize = gs.CD2,bounds=(4.5*gs.BC,10*gs.BC) ) # length of link 
             model2.outCrank2 = pe.Var(initialize =gs.ED2,bounds = (gs.ED2,gs.ED2)) # length of output crank
@@ -1239,20 +1120,16 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
                 model2.sxs22 = pe.Var(initialize=0.5, bounds=( 0 , 1))
                 model2.cxs22 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))    
                 
-            # model2.sxs12 =  pe.Var(initialize =0,bounds=(-1,1)) 
-            # model2.cxs12 = pe.Var(initialize = 1,bounds=(-1,1))
-            # model2.sxs22 =  pe.Var(initialize =0,bounds=(-1,1)) 
-            # model2.cxs22 = pe.Var(initialize = -1,bounds=(-1,1))
             model2.bc2 = pe.Var(initialize =gs.BC,bounds=(0.25*BC,4*BC) ) #link length
             model2.Con = pe.ConstraintList()
-            model2.obj=pe.ObjectiveList()
+            model2.obj = pe.ObjectiveList()
             # =============================================================================
             model2.obj.add(expr=(100*(model2.cxs22*model2.cxs12+model2.sxs22*model2.sxs12-math.cos(gs.w3))**2+(eval(F_S1NYS_T)+eval(F_S2NYS_T))**2+(eval(F_S1NYK_T)+eval(F_S2NYK_T))**2)) # minize wipping angel 
             # =============================================================================
             #==============================================================================
             # model2.Con.add(expr=1000*(model2.cxs22*model2.cxs12+model2.sxs22*model2.sxs12-math.cos(w3))>=0.0) #wipping angle requirement 
             # model2.Con.add(eval(F12NYS_T)+eval(F22NYS_T)>=0)
-            # model2.Con.add(eval(F12NYK_T)+eval(F22NYK_T)>=0)
+            # model2.Con.add(eval(F12NYK_T)+eval(F22NYK_T)>=0) # move to objective function
             #==============================================================================
             if (Clock2==1):
                 model.Con.add(model.sxs2*model.cxs1-model.cxs2*model.sxs1>=0)
@@ -1264,17 +1141,6 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             model2.Con.add(eval(F_S11)==0)
             model2.Con.add(eval(F_S12)==0)
             #==============================================================================
-            t1=eval(F_S1NYS_T)
-            t2=eval(F_S2NYS_T)
-            t3=eval(F_S1NYK_T)
-            t4=eval(F_S2NYK_T)
-            #==============================================================================
-            # model2.Con.add(eval(F12NYS_T)+eval(F22NYS_T)==0)
-            # #==============================================================================
-            # #==============================================================================
-            # model2.Con.add(eval(F12NYK_T)+eval(F22NYK_T)==0)
-            #==============================================================================
-            # =============================================================================
             # model2.Con.add(expr=model2.sxm12**2+model2.cxm12**2-1==0)
             # model2.Con.add(expr=model2.sxm22**2+model2.cxm22**2-1==0)
             # =============================================================================
@@ -1286,7 +1152,7 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             model2.Con.add(expr=(sxs1*model2.cDelta2+cxs1*model2.sDelta2-model2.sxm12)==0)
             model2.Con.add(expr=(cxs2*model2.cDelta2-sxs2*model2.sDelta2-model2.cxm22)==0) 
             model2.Con.add(expr=(sxs2*model2.cDelta2+cxs2*model2.sDelta2-model2.sxm22)==0)
-         
+            
             opt2 = pe.SolverFactory('ipopt')
             result_obj2 = opt2.solve(model2)
             str3="The solver returned a status of: " + str(result_obj2.solver.status)
@@ -1307,140 +1173,65 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             sDelta2=pe.value(model2.sDelta2)
             cDelta2=pe.value(model2.cDelta2)
             # =============================================================================
-            gs.BC2=pe.value(model2.bc2)
-            gs.xs22=Func.getDegree(cxs22,sxs22)
-            gs.xs12=Func.getDegree(cxs12,sxs12)
-            gs.xm22=Func.getDegree(cxm22,sxm22)
-            gs.xm12=Func.getDegree(cxm12,sxm12)
-            gs.Delta2=Func.getDegree(cDelta2,sDelta2)
-            gs.CD2=  (pe.value((model2.link2)))
-            gs.ED2=(pe.value(model2.outCrank2))
+            gs.BC2b=pe.value(model2.bc2)
+            gs.xs22b=Func.getDegree(cxs22,sxs22)
+            gs.xs12b=Func.getDegree(cxs12,sxs12)
+            gs.xm22b=Func.getDegree(cxm22,sxm22)
+            gs.xm12b=Func.getDegree(cxm12,sxm12)
+            gs.Delta2b=Func.getDegree(cDelta2,sDelta2)
+            gs.CD2b=  (pe.value((model2.link2)))
+            gs.ED2b=(pe.value(model2.outCrank2))
             S1NYS_Tv = eval(F_S1NYS_T)
             S2NYS_Tv = eval(F_S2NYS_T)
             S1NYK_Tv = eval(F_S1NYK_T)
             S2NYK_Tv = eval(F_S2NYK_T)
-            S1NYS_T=Func.degree(math.pi/2-math.acos(pe.value(S1NYS_Tv)))
-            S2NYS_T=Func.degree(math.pi/2-math.acos(pe.value(S2NYS_Tv)))
-            S1NYK_T=Func.degree(math.pi/2-math.acos(pe.value(S1NYK_Tv)))
-            S2NYK_T=Func.degree(math.pi/2-math.acos(pe.value(S2NYK_Tv)))
+            gs.S1NYS_Tb=Func.degree(math.pi/2-math.acos(pe.value(S1NYS_Tv)))
+            gs.S2NYS_Tb=Func.degree(math.pi/2-math.acos(pe.value(S2NYS_Tv)))
+            gs.S1NYK_Tb=Func.degree(math.pi/2-math.acos(pe.value(S1NYK_Tv)))
+            gs.S2NYK_Tb=Func.degree(math.pi/2-math.acos(pe.value(S2NYK_Tv)))
 
-
-        # write and rounding 
-        
-        gs.w3opt = Func.wipAngle(gs.xs22,gs.xs12,gs.KBEW2)
-
-        print ('----------------------------slave link info-----------------------------')
-        print( 'BC2=%.4f'%gs.BC2+'CD2=%.4f'% gs.CD2 + '\tED2=%.4f'% gs.ED2
-              +'\nDelta=%.4f'%gs.Delta2 +'\tD=%.4f'%gs.Distance2)
-        print('NYS_T1=%.4f'%S1NYS_T+'\tNYS_T2=%.4f'%S2NYS_T)
-        print('NYK_T1=%.4f'%S1NYK_T+'\tNYK_T2=%.4f'%S2NYK_T)
-        print('w3=%.4f'%gs.w3opt+'\tw3Target=%.4f'%(180/math.pi*gs.w3))
-        
-
-        if gs.MechanicType =='Center':
-            Func.write(gs.sheet2,37,2,gs.ED2)
-            self.TableOpt2.setItem(0,0,Qitem('%.4f'%gs.ED2))
-        else:
-            Func.write(gs.sheet2,37,2,gs.BC2)
-            self.TableOpt2.setItem(0,0,Qitem('%.4f'%gs.BC2))
-
-
-        self.TableOpt2.setItem(0,1,Qitem('%.4f'%gs.CD2))
-        self.TableOpt2.setItem(0,2,Qitem('%.4f'%gs.xs12))
-        self.TableOpt2.setItem(0,3,Qitem('%.4f'%gs.xs22))
-        self.TableOpt2.setItem(0,4,Qitem('%.4f'%gs.w3opt))
-        self.TableOpt2.setItem(0,5,Qitem('%.4f'%S1NYS_T))
-        self.TableOpt2.setItem(0,6,Qitem('%.4f'%S2NYS_T))
-        self.TableOpt2.setItem(0,7,Qitem('%.4f'%(S1NYS_T+S2NYS_T)))
-        Func.write(gs.sheet2,29,6,gs.w3Target)
-        Func.write(gs.sheet2,37,3,gs.CD2)
-        Func.write(gs.sheet2,37,5,gs.xs12)
-        Func.write(gs.sheet2,37,6,gs.xs22)
-        Func.write(gs.sheet2,37,7,gs.w3opt)
-        Func.write(gs.sheet2,37,9,S1NYS_T)
-        Func.write(gs.sheet2,37,10,S2NYS_T)
-        Func.write(gs.sheet2,37,11,(S1NYS_T+S2NYS_T))
-
-        ###rounding
-        gs.CD2=round(gs.CD2,1)
-        if gs.MechanicType =='Center':
-            gs.ED2= round(gs.ED2,1)
-        else:
-            gs.BC2=round(gs.BC2,1)
             
-        gs.Ra_Rb2=float(gs.BC2/gs.CD2)
-        outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave UWL
-        outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave OWL
-        #[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],D[0][0],D[0][1],D[0][2]]
-        gs.w3opt=Func.angleDiff(outS4[1],outS3[1])
-        S1NYS_T=outS3[2]
-        S2NYS_T=outS4[2]
-        self.TextW2.setText('%.4f'%gs.w2Target)
-        self.TextW3.setText('%.4f'%gs.w3Target)
-        if gs.MechanicType =='Center':
-            Func.write(gs.sheet2,38,2,gs.ED2)
-            Func.write(gs.sheet2, 31, 6, 'ED')
-            self.TableOpt2.setItem(1,0,Qitem('%.1f'%gs.ED2))
-            self.textEdit_3.setText('ED')
-        else:
-            Func.write(gs.sheet2,38,2,gs.BC2)
-            Func.write(gs.sheet2, 31, 6, 'BC')
-            self.textEdit_3.setText('BC')
-            self.TableOpt2.setItem(1,0,Qitem('%.1f'%gs.BC2))
-        Func.write(gs.sheet2,38,3,gs.CD2)
-        Func.write(gs.sheet2,38,5,'%.2f'%outS3[1])
-        Func.write(gs.sheet2,38,6,'%.2f'%outS4[1])
-        Func.write(gs.sheet2,38,7,'%.2f'%gs.w3opt)
-        Func.write(gs.sheet2,38,9,'%.2f'%S1NYS_T)
-        Func.write(gs.sheet2,38,10,'%.2f'%S2NYS_T)
-        Func.write(gs.sheet2,38,11,'%.2f'%(S1NYS_T+S2NYS_T))
-        Func.write(gs.sheet2,40,3,'%.2f'%gs.w3opt)
-        Func.write(gs.sheet2,40,9,'%.2f'%S1NYS_T)
-        Func.write(gs.sheet2,40,10,'%.2f'%S2NYS_T)
+            gs.w3optb = Func.wipAngle(gs.xs22b,gs.xs12b,gs.KBEW2)
 
-        self.TableOpt2.setItem(1,1,Qitem('%.1f'%gs.CD2))
-        self.TableOpt2.setItem(1,2,Qitem('%.2f'%outS3[1]))
-        self.TableOpt2.setItem(1,3,Qitem('%.2f'%outS4[1]))
-        self.TableOpt2.setItem(1,4,Qitem('%.2f'%gs.w3opt))
-        self.TableOpt2.setItem(1,5,Qitem('%.2f'%S1NYS_T))
-        self.TableOpt2.setItem(1,6,Qitem('%.2f'%S2NYS_T))
-        self.TableOpt2.setItem(1,7,Qitem('%.2f'%(S1NYS_T+S2NYS_T)))
-        self.TableOpt2.setItem(2,1,Qitem('%.2f'%gs.w3opt))
-        self.TableOpt2.setItem(2,6,Qitem('%.2f'%S1NYS_T))
-        self.TableOpt2.setItem(2,7,Qitem('%.2f'%S2NYS_T))
+            ###rounding
+            gs.CD2=round(gs.CD2b,1)
+            if gs.MechanicType =='Center':
+                gs.ED2= round(gs.ED2b,1)
+            else:
+                gs.BC2=round(gs.BC2,1)
+            gs.xm12 = gs.xm12b
+            gs.xm22 = gs.xm2b
+            gs.Ra_Rb2=float(gs.BC2/gs.CD2)
+            outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave UWL
+            outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave OWL
+            #[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],D[0][0],D[0][1],D[0][2]]
+            gs.xs12 = outS3[1]
+            gs.xs22 = outS4[1]
+            gs.w3opt=Func.angleDiff(gs.xs22,gs.xs12)
+            S1NYS_T=outS3[2]
+            S2NYS_T=outS4[2]
 
-        print('After Rounding:'+'BC2=%.1f'%gs.BC2+'\tCD2=%.1f'%gs.CD2
-              +'\nDelta=%.4f'%gs.Delta2+'\tED2=%.1f'%gs.ED2)
 
-        print('NYS_T1=%.4f'%S1NYS_T+'\tNYS_T2=%.4f'%S2NYS_T)
-        print('NYK_T1=%.4f'%S1NYK_T+'\tNYK_T2=%.4f'%S2NYK_T)
-        print('w3=%.4f'%gs.w3opt+'\tw3Target=%.4f'%(180/math.pi*gs.w3))
-        outM1=[float(s) for s in outM1]
-        outM2=[float(s) for s in outM2]
-        outS3=[float(s) for s in outS3]
-        outS4=[float(s) for s in outS4]
-        # write to output sheet
-
-        if gs.startFrom == 'APS1':
-            gs.zeroAngle = gs.xm1-gs.APS1
-            gs.offsetAngle = gs.offsetAngle-gs.APS1
-            gs.Alfa = gs.Alfa+gs.APS1
-        elif gs.startFrom =='APS2':
-            gs.zeroAngle = gs.xm1-gs.APS2
-            gs.offsetAngle = gs.offsetAngle-gs.APS2
-            gs.Alfa = gs.Alfa+gs.APS2
-        else:
-            gs.zeroAngle = gs.xm1
-            gs.Alfa = gs.Alfa
-            gs.offsetAngle = gs.offsetAngle
+            # outM1=[float(s) for s in outM1]
+            # outM2=[float(s) for s in outM2]
+            # outS3=[float(s) for s in outS3]
+            # outS4=[float(s) for s in outS4]
+            # write to output sheet
+            
+   
         
-        print('--------optimization completed------------')
+            print('--------optimization completed------------')
+
+        gs.printGS()
+        gs.writeGS()
+        gs.startCal()
 
 class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
     def __init__(self,parent=None):
         super(MainWindow_Input,self).__init__(parent)
         self.setupUi(self)
         self.initiInput()
+       # self.LoadClicked()
 
 
     def UpdateOptValue(self):
@@ -1464,7 +1255,7 @@ class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
 
         if gs.MechanicType =='Center':
             Func.writeNewValueGUI(self.tableSlaveCrankInfo,4,0,gs.CD2,bounds=GeneralBounds)
-            Func.writeNewValueGUI(self.tableSlaveCrankInfo,5,0,gs.ED2,bounds = GenealBounds)
+            Func.writeNewValueGUI(self.tableSlaveCrankInfo,5,0,gs.ED2,bounds = GeneralBounds)
 
         else :
             Func.writeNewValueGUI(self.tableSlaveCrankInfo,4,0,gs.CD2,bounds = GeneralBounds)
@@ -1501,9 +1292,7 @@ class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
         
     def initiInput(self):
         print ('start initiInput')
-        
-
-
+    
         self.TextCustomer.setText(Func.read(gs.sheet1,5,2))
         self.TextProject.setText(Func.read(gs.sheet1,5,9))
         self.TextDepartment.setText(Func.read(gs.sheet1,5,15))
@@ -1653,7 +1442,6 @@ class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
     def LoadClicked(self):
         print('start loading data')
         # loading from excel
-        
         print('start loading')
         gs.Customer    = self.TextCustomer.text()
         gs.ProjectName = self.TextProject.text()
@@ -1940,7 +1728,7 @@ class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
 
         print('load completed')
 
-
+    
 def get_file_name(dir, file_extension):
     f_list = os.listdir(dir)
 
@@ -2055,11 +1843,10 @@ if __name__ == "__main__":
         gs.preTreat()
         
 
-                
         mainWindow = MainWindow()
-        mainWindow.WindowOpt.OptClicked()
-        mainWindow.WindowAlpha.alphaTable()
-        mainWindow.WindowExtreme.ExtremeTable()
+        mainWindow.WindowOpt.OptClicked(gs)
+        mainWindow.WindowAlpha.alphaTable(gs)
+        mainWindow.WindowExtreme.ExtremeTable(gs)
     
 
     else:
