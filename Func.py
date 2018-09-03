@@ -6,7 +6,7 @@ Created on Sat Jun 23 09:55:11 2018
 """
 import json
 import math
-
+import time
 import matplotlib.pyplot as plt
 import numpy as np
 import openpyxl as xl
@@ -18,6 +18,8 @@ from openpyxl.utils import get_column_letter
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import QTableWidgetItem as Qitem
 from sympy import plot_implicit
+import logging
+import os
 #==============================================================================
 # import pyomo.environ as pe
 #==============================================================================
@@ -35,43 +37,47 @@ def extractattr(c):
         name.remove(item)
     return name
 
-def writeInputjson(jsonPath,input,gs):
-    nameInput = extractattr(input)
-    nameError = extractattr(input.errorP)
+def writejson(jsonPath,input,gs):
     DictInput  ={}
     DictErrorP ={}
     DictErrorN ={}
-    for var in nameError:
-        DictErrorP[var]= getattr(gs.errorP, var)
-        DictErrorN[var] = getattr(gs.errorN, var)
+    nameInput = extractattr(input)
     for variable in nameInput:
         DictInput[variable]=getattr(gs,variable)
-    DictInput['errorP'] = DictErrorP
-    DictInput['errorN'] = DictErrorN
-    jStr = json.dumps(DictInput)
-    with open(jsonPath,'w') as f:
-        f.write(jStr)
+    if hasattr(input,'errorP'):
+        nameError = extractattr(input.errorP)
+        for var in nameError:
+            DictErrorP[var]= getattr(gs.errorP, var)
+            DictErrorN[var] = getattr(gs.errorN, var)
+            DictInput['errorP'] = DictErrorP
+            DictInput['errorN'] = DictErrorN
+        jStr = json.dumps(DictInput)
+        with open(jsonPath,'w') as f:
+            f.write(jStr)
 
-def LoadInputJson(jsonPath,input,gs):
+def LoadJson(jsonPath,input,gs):
     f = open(jsonPath,'r')
     content = f.read()
     Dict = json.loads(content)
-    DictErrorP = Dict['errorP'] 
-    DictErrorN = Dict['errorN']
+    nameInput = extractattr(input)
+
+    if hasattr(input,'errorP'):
+        nameInput.remove('errorP')
+        nameInput.remove('errorN')
+        nameError = extractattr(input.errorP)
+        DictErrorP = Dict['errorP'] 
+        DictErrorN = Dict['errorN']
+        for var in nameError:
+            setattr(gs.errorP,var,DictErrorP[var])
+            setattr(gs.errorN,var,DictErrorN[var])
+            
+    for variable in nameInput:
+        setattr(gs,variable,Dict[variable])
     #Dict.pop('errorP')
     #Dict.pop('errorN')
 
-    nameInput = extractattr(input)
-    nameInput.remove('errorP')
-    nameInput.remove('errorN')
 
-    nameError = extractattr(input.errorP)
 
-    for var in nameError:
-        setattr(gs.errorP,var,DictErrorP[var])
-        setattr(gs.errorN,var,DictErrorN[var])
-    for variable in nameInput:
-        setattr(gs,variable,Dict[variable])
     
 def  writeNewValueGUI(tableWidget,i,j,value,bounds=[ None, None]):
     newItem = Qitem(str(value))
@@ -607,3 +613,22 @@ def update_lines(num, dataLines, lines, ax):
         line.set_data(temp)
         line.set_3d_properties([Cz, Dz])
     return lines
+
+def logSetting():
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)  
+        rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
+        log_path = os.getcwd() + '/Logs/'
+        if not os.path.exists(log_path):
+            os.makedirs(log_path)
+
+        log_name = log_path + rq + '.log'
+        logfile = log_name
+        fh = logging.FileHandler(logfile, mode='w')
+        fh.setLevel(logging.DEBUG) 
+
+        formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+        return logger
+    

@@ -193,10 +193,10 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
         numTolerance = int(len(listToleranceStrall)/2)
         if  obj =='outputAngle':
                 t = 0
-                index = 1 # to write out
+                gs.index = 1 # to write out
         elif obj =='tangent force angle':
                 t = 1
-                index =4 # to write out
+                gs.index =4 # to write out
         else:
                 print('please configure objective function')
                 
@@ -204,12 +204,12 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
                 listToleranceStr = listToleranceStrall[0:numTolerance]
                 Base = [eval('gs.'+st) for st in listToleranceStr]
                 Target = Func.Tolerance(Base,gs.xm1,gs.xm2)[t]
-                n = 0
+                gs.no = 2
         elif noCrank == 'Slave':
                 listToleranceStr = listToleranceStrall[numTolerance:]
                 Base = [eval('gs.'+st) for st in listToleranceStr]
                 Target = Func.Tolerance(Base,gs.xm12,gs.xm22)[t]
-                n=1
+                gs.no=3
         else:
                 print('please configure noCrank')
 
@@ -218,54 +218,52 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
         errorPositive = [eval(t) for t in errorPList]
         errorNList = [ 'gs.errorN.'+t for t in listToleranceStr]
         errorNegative = [eval(t) for t in errorNList]
-        w2ErrorList = []  # store error
-        kpiList = []  # store kpi dimension
-        w2List = [] # store value
+
         
         
         ToleranceValue = Base.copy()  # to be changed
         if n==0: #master
                 for i in range(numTolerance):
-                        Func.updateTolerance(ToleranceValue, w2ErrorList, w2List, kpiList, i,  t,Target, errorPositive[i],
+                        Func.updateTolerance(ToleranceValue, gs.w2ErrorList, gs.w2List, gs.kpiList, i,  t,Target, errorPositive[i],
                                 errorNegative[i], gs.xm1, gs.xm2)
                 arrayi = ToleranceValue.copy()
                 print(ToleranceValue)
                 for i in range(numTolerance):
                         arrayi[i] = Base[i]
-                        Func.updateTolerance(arrayi, w2ErrorList, w2List, kpiList, i, t,Target, errorPositive[i],
+                        Func.updateTolerance(arrayi, gs.w2ErrorList, gs.w2List, gs.kpiList, i, t,Target, errorPositive[i],
                                 errorNegative[i], gs.xm1, gs.xm2)
         elif n==1:#slave
                 for i in range(numTolerance):
-                        Func.updateTolerance(ToleranceValue, w2ErrorList, w2List, kpiList, i, t,Target,
+                        Func.updateTolerance(ToleranceValue, gs.w2ErrorList, gs.w2List, gs.kpiList, i, t,Target,
                                              errorPositive[i],
                                              errorNegative[i], gs.xm12, gs.xm22)
                 
                 arrayi = ToleranceValue.copy()
                 for i in range(numTolerance):
                         arrayi[i] = Base[i]
-                        Func.updateTolerance(arrayi,w2ErrorList, w2List, kpiList, i, t,Target,
+                        Func.updateTolerance(arrayi,gs.w2ErrorList, gs.w2List, gs.kpiList, i, t,Target,
                                              errorPositive[i],
                                              errorNegative[i], gs.xm12, gs.xm22)
-        Parameter = np.tile(listToleranceStr, 2)
-        #w2ErrorList=np.array(w2ErrorList).cumsum()
+        gs.Parameter = np.tile(listToleranceStr, 2)
+        #gs.w2ErrorList=np.array(gs.w2ErrorList).cumsum()
         # start wrtie to ui/excel
         self.tableTolerance.setRowCount(2*numTolerance)
         for i in range(2*numTolerance):
-                self.tableTolerance.setItem(i, 0, Qitem(str(2*(n+1))))
-                self.tableTolerance.setItem(i, 1, Qitem(Parameter[i]))
-                self.tableTolerance.setItem(i, 2, Qitem('%.4f'%kpiList[i]))
-                self.tableTolerance.setItem(i, 3, Qitem('%.4f'%w2List[i]))
-                self.tableTolerance.setItem(i, 4, Qitem('%.4f'%w2ErrorList[i]))
-        Func.write(gs.sheet6,3,4,(n+2))
-        Func.write(gs.sheet6,3,6,index)
+                self.tableTolerance.setItem(i, 0, Qitem(str(gs.no)))
+                self.tableTolerance.setItem(i, 1, Qitem(gs.Parameter[i]))
+                self.tableTolerance.setItem(i, 2, Qitem('%.4f'%gs.kpiList[i]))
+                self.tableTolerance.setItem(i, 3, Qitem('%.4f'%gs.w2List[i]))
+                self.tableTolerance.setItem(i, 4, Qitem('%.4f'%gs.w2ErrorList[i]))
+        Func.write(gs.sheet6,3,4,gs.n0)
+        Func.write(gs.sheet6,3,6,gs.index)
         startColumn = 2
         startRow = 10
         for i in range(2*numTolerance):
-                Func.write(gs.sheet6, startRow + i, startColumn, 2*(n+1))  # TBD:N2
-                Func.write(gs.sheet6, startRow + i, startColumn + 1, Parameter[i])  # parameter
-                Func.write(gs.sheet6, startRow + i, startColumn + 2, '%.4f'%kpiList[i])
-                Func.write(gs.sheet6, startRow + i, startColumn + 3, '%.4f'%w2List[i])
-                Func.write(gs.sheet6, startRow + i, startColumn + 4, '%.4f'%w2ErrorList[i])
+                Func.write(gs.sheet6, startRow + i, startColumn, gs.no)  # TBD:N2
+                Func.write(gs.sheet6, startRow + i, startColumn + 1, gs.Parameter[i])  # parameter
+                Func.write(gs.sheet6, startRow + i, startColumn + 2, '%.4f'%gs.kpiList[i])
+                Func.write(gs.sheet6, startRow + i, startColumn + 3, '%.4f'%gs.w2List[i])
+                Func.write(gs.sheet6, startRow + i, startColumn + 4, '%.4f'%gs.w2ErrorList[i])
 
         print('Tolerance calculation completed')
 
@@ -334,194 +332,11 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
     def __init__(self,parent=None):
         super(MainWindow_alphaNumeric,self).__init__(parent)
         self.setupUi(self)
-        
-        
-    def alphaTable(self):
-        print('-----------------------start map calculation-------------------------')
-        time_start = time.time()
-
-        output=[]
-        output2=[]
-        # =============================================================================
-        alpha0=gs.xm1
-        gs.step=int(self.Textstep.text())
-        if gs.DriveType=='Standard':    
-            gs.num =int(abs(360/gs.step))
-        else:
-            gs.num=math.ceil(abs(gs.Alfa/gs.step))+1
-        alphaList = [alpha0 +gs.step * x  for x in range(gs.num-1)]
-        alphaList.append(alpha0+gs.Alfa)
-        for alpha in alphaList:
-            if   gs.MechanicType =='Center':
-                outM=   Func.Output(gs.BC,gs.CD,gs.ED,alpha,gs.A,gs.B,gs.E,gs.F,KBEW= gs.KBEW)  #
-                outS =  Func.Output(gs.BC2,gs.CD2,gs.ED2,alpha,gs.A2,gs.B2,gs.E2,gs.F2,KBEW = gs.KBEW2)  #
-            else:
-                outM=   Func.Output(gs.BC,gs.CD,gs.ED,alpha,gs.A,gs.B,gs.E,gs.F,KBEW = gs.KBEW)  #
-                alpha2 =outM[1]+gs.Delta2
-                outS =  Func.Output(gs.BC2,gs.CD2,gs.ED2,alpha2,gs.A2,gs.B2,gs.E2,gs.F2,KBEW = gs.KBEW2)  #
-            output.append(outM)
-            output2.append(outS)
-
-        beta_sList=[]
-        beta_ssList=[]
-        beta_s2List=[]
-        beta_ss2List=[]
-
-
-        out = pd.DataFrame(output)
-        out2= pd.DataFrame(output2)
-        out.columns =['alpha','beta','NYS_T','NYS_A','NYK_T','NYK_A','Cx','Cy','Cz','Dx','Dy','Dz']
-        out2.columns=['alpha2','beta2','NYS_T2','NYS_A2','NYK_T2','NYK_A2','Cx2','Cy2','Cz2','Dx2','Dy2','Dz2']
-
-        series1=pd.Series([gs.zeroAngle]*gs.num)
-        series2=pd.Series([out['beta'][0]]*gs.num)
-        series3=pd.Series([out2['alpha2'][0]]*gs.num)
-        series4=pd.Series([out2['beta2'][0]]*gs.num)
-        out['alpha']=out['alpha'].sub(series1,axis=0)
-        out['beta'] = out['beta'].sub(series2,axis=0)
-        out2['alpha2'] = out2['alpha2'].sub(series3,axis=0)
-        out2['beta2'] = out2['beta2'].sub(series4,axis=0)
-
-        for i in range(gs.num-1):
-            beta_s =(out['beta'][i+1]-out['beta'][i])/(alphaList[i+1]-alphaList[i])
-            beta_sList.append(beta_s)
-            beta_s2 =(out2['beta2'][i+1]-out2['beta2'][i])/(alphaList[i+1]-alphaList[i])
-            beta_s2List.append(beta_s2)
-        beta_sList.append(0) # fill with 0
-        beta_s2List.append(0) # fill with 0
-        for i in range(gs.num-1):
-            beta_ss =(beta_sList[i+1]-beta_sList[i])/(alphaList[i+1]-alphaList[i])
-            beta_ssList.append(beta_ss)
-            beta_ss2 =(beta_s2List[i+1]-beta_s2List[i])/(alphaList[i+1]-alphaList[i])
-            beta_ss2List.append(beta_ss2)
-        beta_ssList.append(0) # fill with 0
-        beta_ss2List.append(0) # fill with 0
-        out['beta_s']=beta_sList
-        out['beta_ss']=beta_ssList
-        out2['beta_s2']=beta_s2List
-        out2['beta_ss2']=beta_ss2List
-         
-        @staticmethod
-        def plot(out,gs):
-            x=out['alpha']
-            plt.figure(1)
-            ax=plt.subplot(2,2,1)
-            plt.plot(x,out['beta'],'k--',label='Beta')
-            plt.plot(x,out2['beta2'],'r--',label='Gamma')
-            plt.legend()
-
-            ax=plt.subplot(2,2,2)
-            plt.plot(x,out['beta_s'],'k--',label='B-S')
-            plt.plot(x,out2['beta_s2'],'r:',label='G-S')
-            plt.legend()
-
-            ax=plt.subplot(2,2,3)
-            l3=plt.plot(x,out['beta_ss'],'k--',label='B-SS')
-            l4=plt.plot(x,out2['beta_ss2'],'r:',label='G-SS')
-            plt.legend()
-            plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_Angle'+gs.styleTime+'.jpg')
-
-            plt.figure(2)
-            ax=plt.subplot(2,2,1)
-            plt.plot(x,out['NYS_T'],'k--',label='NYS_T')
-            plt.plot(x,out2['NYS_T2'],'r:',label='NYS_T2')
-            plt.legend()
-
-            ax=plt.subplot(2,2,2)
-            plt.plot(x,out['NYK_T'],'k--',label='NYK_T')
-            plt.plot(x,out2['NYK_T2'],'r:',label='NYK_T2')
-            plt.legend()
-
-            ax=plt.subplot(2,2,3)
-            plt.plot(x,out['NYS_A'],'k--',label='NYS_A')
-            plt.plot(x,out2['NYS_A2'],'r:',label='NYS_A2')
-            plt.legend()
-
-            ax=plt.subplot(2,2,4)
-            plt.plot(x,out['NYK_A'],'k--',label='NYK_A')
-            plt.plot(x,out2['NYK_A2'],'r:',label='NYK_A2')
-            plt.legend()
-            plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_NY'+gs.styleTime+'.jpg')
-
-        # =============================================================================
-        #end plot
-        cols =['alpha','beta','beta_s','beta_ss','NYS_T','NYS_A','NYK_T','NYK_A',]
-        cols2=['beta2','beta_s2','beta_ss2','NYS_T2','NYS_A2','NYK_T2','NYK_A2']
-        colsCordinate=['Cx','Cy','Cz','Dx','Dy','Dz']
-        colsCordinate2=['Cx2','Cy2','Cz2','Dx2','Dy2','Dz2']
-        # =============================================================================
-        outKPI = out.loc[:,cols]
-        outKPI2 = out2.loc[:,cols2]
-        outCordinate = out.loc[:,colsCordinate]
-        outCordinate2=out2.loc[:,colsCordinate2]
-        # =============================================================================
-        outKPI['NYS_T']=outKPI['NYS_T'].astype('float64')
-        outKPI['NYS_A']=outKPI['NYS_A'].astype('float64')
-        outKPI['NYK_T']=outKPI['NYK_T'].astype('float64')
-        outKPI['NYK_A']=outKPI['NYK_A'].astype('float64')
-        outKPI2['NYS_T2']=outKPI2['NYS_T2'].astype('float64')
-        outKPI2['NYS_A2']=outKPI2['NYS_A2'].astype('float64')
-        outKPI2['NYK_T2']=outKPI2['NYK_T2'].astype('float64')
-        outKPI2['NYK_A2']=outKPI2['NYK_A2'].astype('float64')
-
-        outKPIall=pd.concat([outKPI,outKPI2],axis=1)
-        outall = pd.concat([out,out2],axis=1)
-
-        # =============================================================================
-        gs.maxArray=[]
-        gs.minArray=[]
-        gs.maxArray2=[]
-        gs.minArray2=[]
-        # =============================================================================
-        # =============================================================================
-
-        for i in range(1,len(cols)):
-            listT = Func.getMax(outKPIall,i)
-            gs.maxArray.append(listT[0])
-            gs.maxArray.append(listT[1])
-            listT = Func.getMin(outKPIall,i)
-            gs.minArray.append(listT[0])
-            gs.minArray.append(listT[1])
-
-        for i in range(len(cols),len(cols)+len(cols2)):
-            listT = Func.getMax(outKPIall,i)
-            gs.maxArray2.append(listT[0])
-            gs.maxArray2.append(listT[1])
-            listT = Func.getMin(outKPIall,i)
-            gs.minArray2.append(listT[0])
-            gs.minArray2.append(listT[1])
-            
-
-        gs.w2cal=gs.maxArray[1]-gs.minArray[1]
-        gs.w3cal=gs.maxArray2[1]-gs.minArray2[1]
-        print('w2=%.2f'%gs.w2cal+'\tw3=%.2f'%gs.w3cal)
-        time_end=time.time()
-
-        print(' map time cost：%.4f'%(time_end-time_start)+'s')
-        startRow = 10
-        startCol = 1
-        self.tableAlfa.setRowCount(gs.num)
-        for i in range(gs.num):
-            for j in range(outKPIall.shape[1]):
-                self.tableAlfa.setItem(i,j,Qitem('%.2f'%outKPIall.iloc[i,j]))
-                Func.write(gs.sheet4,startRow+i , startCol+j , outKPIall.iloc[i,j])
-        Func.write(gs.sheet4,3,6,gs.step)
-
-        #outCordinate.to_excel('outputCordinate.xlsx')
-        
-        #Range=[1.2,50,8,90,8]# 90 TBD
-        #write to excel
-
-    #animation
+    @staticmethod
+    def animate(outCordinate):
         matplotlib.matplotlib_fname()
-
         number=gs.num
-        ListC=[]
-        ListD=[]
-        ListC2=[]
-        ListD2=[]
-        
-        
+
         Atemp=np.array([gs.A]*number).T
         Btemp=np.array([gs.B]*number).T
         Etemp=np.array([gs.E]*number).T
@@ -532,8 +347,8 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         F2temp=np.array([gs.F2]*number).T
         Ctemp= np.array((outCordinate['Cx'],outCordinate['Cy'],outCordinate['Cz']))
         Dtemp= np.array((outCordinate['Dx'],outCordinate['Dy'],outCordinate['Dz']))
-        C2temp= np.array((outCordinate2['Cx2'],outCordinate2['Cy2'],outCordinate2['Cz2']))
-        D2temp= np.array((outCordinate2['Dx2'],outCordinate2['Dy2'],outCordinate2['Dz2']))
+        C2temp= np.array((outCordinate['Cx2'],outCordinate['Cy2'],outCordinate['Cz2']))
+        D2temp= np.array((outCordinate['Dx2'],outCordinate['Dy2'],outCordinate['Dz2']))
         dataAB=np.r_[Atemp,Btemp]
         dataAB2=np.r_[A2temp,B2temp]
         dataEF=np.r_[Etemp,Ftemp]
@@ -556,6 +371,7 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         data[7]=dataCD2
         data[8]=dataDE2
         data[9]=dataEF2
+        #TBD
         # initial point
         def orthogonal_proj(zfront, zback):
             a = (zfront+zback)/(zfront-zback)
@@ -594,14 +410,14 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         zmax = max (cordinateMax[2],cordinateMax[5])
         
 
-        xrange = xmax-xmin
+        xxrange = xmax-xmin
         yrange = ymax-ymin
         zrange = zmax-zmin
 
 
         ab=gs.B-gs.A
         lines = [ax2.plot([data[i][0,0],data[i][3,0]],[data[i][1,0],data[i][4,0]],[data[i][2,0],data[i][5,0]],label=Label[i],color=colors[i],linestyle=linestyles[i])[0] for i  in range(10)]
-        gs.ab = [ab[0]/xrange,ab[1]/yrange,ab[2]/zrange] #scale axis equal
+        gs.ab = [ab[0]/xxrange,ab[1]/yrange,ab[2]/zrange] #scale axis equal
         az=-90-Func.degree(math.atan(gs.ab[0]/gs.ab[1]))
         el=-np.sign(ab[1])*Func.degree(math.atan(gs.ab[2]/math.sqrt(gs.ab[0]**2+gs.ab[1]**2)))
         ax2.set_xlim3d(xmin,xmax)
@@ -661,10 +477,185 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         #==============================================================================
         # plt.rcParams['animation.ffmpeg_path']='G:\\wai\\ffmpeg\\bin\\ffmpeg.exe'
         #==============================================================================
-        
         plt.legend()
         plt.show()
-        #return gs.line_ani
+        #return gs.line_ani  
+    @staticmethod
+    def plot(outKPIall):
+            x=outKPIall['alpha']
+            plt.figure(1)
+            ax=plt.subplot(2,2,1)
+            plt.plot(x,outKPIall['beta'],'k--',label='Beta')
+            plt.plot(x,outKPIall['beta2'],'r--',label='Gamma')
+            plt.legend()
+
+            ax=plt.subplot(2,2,2)
+            plt.plot(x,outKPIall['beta_s'],'k--',label='B-S')
+            plt.plot(x,outKPIall['beta_s2'],'r:',label='G-S')
+            plt.legend()
+
+            ax=plt.subplot(2,2,3)
+            l3=plt.plot(x,outKPIall['beta_ss'],'k--',label='B-SS')
+            l4=plt.plot(x,outKPIall['beta_ss2'],'r:',label='G-SS')
+            plt.legend()
+            plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_Angle'+gs.styleTime+'.jpg')
+
+            plt.figure(2)
+            ax=plt.subplot(2,2,1)
+            plt.plot(x,outKPIall['NYS_T'],'k--',label='NYS_T')
+            plt.plot(x,outKPIall['NYS_T2'],'r:',label='NYS_T2')
+            plt.legend()
+
+            ax=plt.subplot(2,2,2)
+            plt.plot(x,outKPIall['NYK_T'],'k--',label='NYK_T')
+            plt.plot(x,outKPIall['NYK_T2'],'r:',label='NYK_T2')
+            plt.legend()
+
+            ax=plt.subplot(2,2,3)
+            plt.plot(x,outKPIall['NYS_A'],'k--',label='NYS_A')
+            plt.plot(x,outKPIall['NYS_A2'],'r:',label='NYS_A2')
+            plt.legend()
+
+            ax=plt.subplot(2,2,4)
+            plt.plot(x,outKPIall['NYK_A'],'k--',label='NYK_A')
+            plt.plot(x,outKPIall['NYK_A2'],'r:',label='NYK_A2')
+            plt.legend()
+            plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_NY'+gs.styleTime+'.jpg')
+    
+    def getextreme(self):
+        n = len(outKPIall.columns) 
+        
+        assert (n%2==1)
+        n1 = int((n+1)/2) # master part
+        for i in range(1,n1):
+            listT = Func.getMax(gs.outKPIall,i)
+            gs.maxArray.append(listT[0])
+            gs.maxArray.append(listT[1])
+            listT = Func.getMin(gs.outKPIall,i)
+            gs.minArray.append(listT[0])
+            gs.minArray.append(listT[1])
+
+        for i in range(n1,n):
+            listT = Func.getMax(gs.outKPIall,i)
+            gs.maxArray2.append(listT[0])
+            gs.maxArray2.append(listT[1])
+            listT = Func.getMin(gs.outKPIall,i)
+            gs.minArray2.append(listT[0])
+            gs.minArray2.append(listT[1])
+            
+
+        gs.w2cal=gs.maxArray[1]-gs.minArray[1]
+        gs.w3cal=gs.maxArray2[1]-gs.minArray2[1]
+        print('w2=%.2f'%gs.w2cal+'\tw3=%.2f'%gs.w3cal)
+        
+        return [maxArray,minArray,maxArray2,minArray2]
+        #outCordinate.to_excel('outputCordinate.xlsx')
+        
+        #Range=[1.2,50,8,90,8]# 90 TBD
+        #write to excel
+   
+    def getoutall(self): # alpha calculation ,return outkpi,outcordinate dataframe
+            print('-----------------------start map calculation-------------------------')
+            output=[]
+            output2=[]
+            # =============================================================================
+            alpha0=gs.xm1
+            gs.step=int(self.Textstep.text())
+            if gs.DriveType=='Standard':    
+                gs.num =int(abs(360/gs.step))
+            else:
+                gs.num=math.ceil(abs(gs.Alfa/gs.step))+1
+            alphaList = [alpha0 +gs.step * x  for x in range(gs.num-1)]
+            alphaList.append(alpha0+gs.Alfa)
+            for alpha in alphaList:
+                if   gs.MechanicType =='Center':
+                    outM=   Func.Output(gs.BC,gs.CD,gs.ED,alpha,gs.A,gs.B,gs.E,gs.F,KBEW= gs.KBEW)  #
+                    outS =  Func.Output(gs.BC2,gs.CD2,gs.ED2,alpha,gs.A2,gs.B2,gs.E2,gs.F2,KBEW = gs.KBEW2)  #
+                else:
+                    outM=   Func.Output(gs.BC,gs.CD,gs.ED,alpha,gs.A,gs.B,gs.E,gs.F,KBEW = gs.KBEW)  #
+                    alpha2 =outM[1]+gs.Delta2
+                    outS =  Func.Output(gs.BC2,gs.CD2,gs.ED2,alpha2,gs.A2,gs.B2,gs.E2,gs.F2,KBEW = gs.KBEW2)  #
+                output.append(outM)
+                output2.append(outS)
+
+            beta_sList=[]
+            beta_ssList=[]
+            beta_s2List=[]
+            beta_ss2List=[]
+
+            out = pd.DataFrame(output)
+            out2= pd.DataFrame(output2)
+            out.columns =['alpha','beta','NYS_T','NYS_A','NYK_T','NYK_A','Cx','Cy','Cz','Dx','Dy','Dz']
+            out2.columns=['alpha2','beta2','NYS_T2','NYS_A2','NYK_T2','NYK_A2','Cx2','Cy2','Cz2','Dx2','Dy2','Dz2']
+
+            series1=pd.Series([gs.zeroAngle]*gs.num)
+            series2=pd.Series([out['beta'][0]]*gs.num)
+            series3=pd.Series([out2['alpha2'][0]]*gs.num)
+            series4=pd.Series([out2['beta2'][0]]*gs.num)
+            out['alpha']=out['alpha'].sub(series1,axis=0)
+            out['beta'] = out['beta'].sub(series2,axis=0)
+            out2['alpha2'] = out2['alpha2'].sub(series3,axis=0)
+            out2['beta2'] = out2['beta2'].sub(series4,axis=0)
+
+            for i in range(gs.num-1):
+                beta_s =(out['beta'][i+1]-out['beta'][i])/(alphaList[i+1]-alphaList[i])
+                beta_sList.append(beta_s)
+                beta_s2 =(out2['beta2'][i+1]-out2['beta2'][i])/(alphaList[i+1]-alphaList[i])
+                beta_s2List.append(beta_s2)
+            beta_sList.append(0) # fill with 0
+            beta_s2List.append(0) # fill with 0
+            for i in range(gs.num-1):
+                beta_ss =(beta_sList[i+1]-beta_sList[i])/(alphaList[i+1]-alphaList[i])
+                beta_ssList.append(beta_ss)
+                beta_ss2 =(beta_s2List[i+1]-beta_s2List[i])/(alphaList[i+1]-alphaList[i])
+                beta_ss2List.append(beta_ss2)
+            beta_ssList.append(0) # fill with 0
+            beta_ss2List.append(0) # fill with 0
+            out['beta_s']=beta_sList
+            out['beta_ss']=beta_ssList
+            out2['beta_s2']=beta_s2List
+            out2['beta_ss2']=beta_ss2List
+            
+            #outKPIall=pd.concat([outKPI,outKPI2],axis=1)
+            outall = pd.concat([out,out2],axis=1)
+            outall = outall.astype('float64')
+            cols =['alpha','beta','beta_s','beta_ss','NYS_T','NYS_A','NYK_T','NYK_A']
+            cols2=['beta2','beta_s2','beta_ss2','NYS_T2','NYS_A2','NYK_T2','NYK_A2']
+            colskpi = cols+cols2
+            colsCordinate=['Cx','Cy','Cz','Dx','Dy','Dz']
+            colsCordinate2=['Cx2','Cy2','Cz2','Dx2','Dy2','Dz2']
+            colsCordinateall = colsCordinate + colsCordinate2
+            # =============================================================================
+            outKPIall = outall.loc[:,colskpi]
+            outCordinateall = outall.loc[:,colsCordinateall]
+           
+            # outKPI['NYS_T']=outKPI['NYS_T'].astype('float64')
+            # outKPI['NYS_A']=outKPI['NYS_A'].astype('float64')
+            # outKPI['NYK_T']=outKPI['NYK_T'].astype('float64')
+            # outKPI['NYK_A']=outKPI['NYK_A'].astype('float64')
+            # outKPI2['NYS_T2']=outKPI2['NYS_T2'].astype('float64')
+            # outKPI2['NYS_A2']=outKPI2['NYS_A2'].astype('float64')
+            # outKPI2['NYK_T2']=outKPI2['NYK_T2'].astype('float64')
+            # outKPI2['NYK_A2']=outKPI2['NYK_A2'].astype('float64')
+            return [outKPIall, outCordinateall]
+    
+    def writealphaNumeric(self):
+        startRow = 10
+        startCol = 1
+        self.tableAlfa.setRowCount(gs.num)
+        for i in range(gs.num):
+            for j in range(gs.outKPIall.shape[1]):
+                self.tableAlfa.setItem(i,j,Qitem('%.2f'%gs.outKPIall.iloc[i,j]))
+                Func.write(gs.sheet4,startRow+i , startCol+j , gs.outKPIall.iloc[i,j])
+        Func.write(gs.sheet4,3,6,gs.step)
+    def alphaTable(self):
+        time_start = time.time()
+        [gs.outKPIall, gs.outCordinateall] = self.getoutall()
+        self.writealphaNumeric()
+        self.getextreme()
+        self.plot(gs.outKPIall)
+
+    #animation
 
     
 class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
@@ -673,60 +664,97 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
         self.setupUi(self)
 
     def setOptItem(self):
-                self.TableOpt.setItem(0,0,Qitem('%.4f'%gs.EDb))
-                self.TableOpt.setItem(0,1,Qitem('%.4f'%gs.CDb))
-                self.TableOpt.setItem(0,2,Qitem('%.4f'%gs.xs1b)) 
-                self.TableOpt.setItem(0,3,Qitem('%.4f'%gs.xs2b))
-                self.TableOpt.setItem(0,4,Qitem('%.4f'%gs.w2optb))
-                self.TableOpt.setItem(0,5,Qitem('%.4f'%(gs.M1NYS_Tb)))
-                self.TableOpt.setItem(0,6,Qitem('%.4f'%(gs.M2NYS_Tb)))
-                self.TableOpt.setItem(0,7,Qitem('%.4f'%(gs.M1NYS_Tb+gs.M2NYS_Tb)))
+                gs.listOpt1 = [[gs.EDb,gs.CDb,gs.xs1b,gs.xs2b,gs.w2optb,gs.M1NYS_Tb,gs.M2NYS_Tb,gs.M1NYS_Tb+gs.M2NYS_Tb]]
+                gs.listOpt1.append([gs.ED,gs.CD,gs.xs1,gs.xs2,gs.w2opt,gs.M1NYS_T,gs.M2NYS_T,gs.M1NYS_T+gs.M2NYS_T])
 
-                self.TableOpt.setItem(1,0,Qitem('%.1f'%gs.ED))
-                self.TableOpt.setItem(1,1,Qitem('%.1f'%gs.CD))
-                self.TableOpt.setItem(1,2,Qitem('%.2f'%gs.xs1))
-                self.TableOpt.setItem(1,3,Qitem('%.2f'%gs.xs2))
-                self.TableOpt.setItem(1,4,Qitem('%.2f'%gs.w2opt))
-                self.TableOpt.setItem(1,5,Qitem('%.2f'%(gs.M1NYS_T)))
-                self.TableOpt.setItem(1,6,Qitem('%.2f'%(gs.M2NYS_T)))
-                self.TableOpt.setItem(1,7,Qitem('%.2f'%(gs.M1NYS_T+gs.M2NYS_T)))
+                gs.listOpt2 = [[gs.ED2b,gs.CD2b,gs.xs12b,gs.xs22b,gs.w3optb,gs.S1NYS_Tb,gs.S2NYS_Tb,gs.S1NYS_Tb+gs.S2NYS_Tb]]
+                gs.listOpt2.append([gs.ED2,gs.CD2,gs.xs12,gs.xs22,gs.w3opt,gs.S1NYS_T,gs.S2NYS_T,gs.S1NYS_T+gs.S2NYS_T])
+                if gs.MechanicType =='Center':
+                    gs.parameterOpt =='ED'
+                    
+                else:
+                    gs.parameterOpt =='BC'
+                    gs.listOpt2[0][0] = gs.BC2b
+                    gs.listOpt2[1][0] = gs.BC2
+                for i,item in enumerate(gs.listOpt1):
+                    for j,par in enumerate(item):
+                        self.TableOpt.setItem(i,j,Qitem('%.4f'%par))
                 self.TableOpt.setItem(2,1,Qitem('%.2f'%gs.w2opt))
                 self.TableOpt.setItem(2,6,Qitem('%.2f'%gs.M1NYS_T))
                 self.TableOpt.setItem(2,7,Qitem('%.2f'%gs.M2NYS_T))
 
-                self.TableOpt2.setItem(0,1,Qitem('%.4f'%gs.CD2b))
-                self.TableOpt2.setItem(0,2,Qitem('%.4f'%gs.xs12b))
-                self.TableOpt2.setItem(0,3,Qitem('%.4f'%gs.xs22b))
-                self.TableOpt2.setItem(0,4,Qitem('%.4f'%gs.w3optb))
-                self.TableOpt2.setItem(0,5,Qitem('%.4f'%gs.S1NYS_Tb))
-                self.TableOpt2.setItem(0,6,Qitem('%.4f'%gs.S2NYS_Tb))
-                self.TableOpt2.setItem(0,7,Qitem('%.4f'%(gs.S1NYS_Tb+gs.S2NYS_Tb)))
 
-                if gs.MechanicType =='Center':
-                    self.TableOpt2.setItem(0,0,Qitem('%.4f'%gs.ED2b))
-                else:
-                    self.TableOpt2.setItem(0,0,Qitem('%.4f'%gs.BC2b))
+                for i,item in enumerate(gs.listOpt2):
+                    for j,par in enumerate(item):
+                        self.TableOpt2.setItem(i,j,Qitem('%.4f'%par))
+                self.TableOpt.setItem(2,1,Qitem('%.2f'%gs.w3opt))
+                self.TableOpt.setItem(2,6,Qitem('%.2f'%gs.S1NYS_T))
+                self.TableOpt.setItem(2,7,Qitem('%.2f'%gs.S2NYS_T))
+                self.textEdit_3.setText(gs.parameterOpt)
                 self.TextW2.setText('%.4f'%gs.w2Target)
                 self.TextW3.setText('%.4f'%gs.w3Target)
-                if gs.MechanicType =='Center':
+                
+    @staticmethod
+    def rounding2():
+        gs.CD2=round(gs.CD2b,1)
+        if gs.MechanicType =='Center':
+            gs.ED2= round(gs.ED2b,1)
+        else:
+            gs.BC2=round(gs.BC2b,1)
+        gs.xm12 = gs.xm12b
+        gs.xm22 = gs.xm22b
+        gs.Ra_Rb2=float(gs.BC2/gs.CD2)
+        outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave UWL
+        outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave OWL
+        #[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],D[0][0],D[0][1],D[0][2]]
+        gs.xs12 = outS3[1]
+        gs.xs22 = outS4[1]
+        gs.w3opt=Func.angleDiff(gs.xs22,gs.xs12)
+        gs.S1NYS_T=outS3[2]
+        gs.S2NYS_T=outS4[2]
+    @staticmethod
+    def rounding():
+        gs.CD=round(gs.CDb,1)
+        gs.ED=round(gs.EDb,1)
+        gs.xm1 = gs.xm1b
+        gs.xm2 = gs.xm2b
+        if gs.DriveType=='Reversing':
+            gs.Alfa = round(gs.Alfab,1)
+            gs.offsetAngle = round(gs.offsetAngleb,1)
+            Equal1inline = repr(equal1[0]).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC') # link length equation for master link
+            Equal2inline = repr(equal2).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC')
+            EqualInline = [Equal1inline,Equal2inline]
+            def Finline(angle):
+                F1 = eval(Equal1inline)
+                F2 = 1000*(eval(Equal2inline)**2-1)
+                return([F1,F2])
+            if gs.KBEW =='+x':
+                [xim1,xis1]= op.fsolve(Finline,[0,0])
+            else :
+                [xim1,xis1] = op.fsolve(Finline,[math.pi,math.pi])
 
-                    self.TableOpt2.setItem(1,0,Qitem('%.1f'%gs.ED2))
-                    self.textEdit_3.setText('ED')
-                else:
+            #[xim2,xis2]= op.fsolve(Finline,[math.pi,math.pi])
+            #gs.xm1 = gs.xm3+gs.offsetAngle
+            gs.xm1 = gs.xm1b
+            gs.xm2 = gs.xm1+gs.Alfa
+        else:
+            gs.offsetAngle = 0
+            gs.Alfa = 360
+        gs.Ra_Rb = float(gs.BC/gs.CD)
+        outM1=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm1,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Master -UWL,[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
+        outM2=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm2,gs.A,gs.B,gs.E,gs.F,KBEW= gs.KBEW) #Master-OWL [alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
+        gs.xs1 = outM1[1]
+        gs.xs2 = outM2[1]
+        # cxs1 = math.cos(Func.rad(gs.xs1))
+        # cxs2 = math.cos(Func.rad(gs.xs2))
+        # sxs1 = math.sin(Func.rad(gs.xs1))
+        # sxs2 = math.sin(Func.rad(gs.xs2))
+        gs.w2opt = Func.wipAngle(gs.xs2,gs.xs1,gs.KBEW)
+        gs.M1NYS_T=outM1[2]
+        gs.M2NYS_T=outM2[2]
+        gs.M1NYK_T=outM1[4]
+        gs.M2NYK_T=outM2[4]
 
-                    self.textEdit_3.setText('BC')
-                    self.TableOpt2.setItem(1,0,Qitem('%.1f'%gs.BC2))
-
-                self.TableOpt2.setItem(1,1,Qitem('%.1f'%gs.CD2))
-                self.TableOpt2.setItem(1,2,Qitem('%.2f'%gs.xs12))
-                self.TableOpt2.setItem(1,3,Qitem('%.2f'%gs.xs22))
-                self.TableOpt2.setItem(1,4,Qitem('%.2f'%gs.w3opt))
-                self.TableOpt2.setItem(1,5,Qitem('%.2f'%gs.S1NYS_T))
-                self.TableOpt2.setItem(1,6,Qitem('%.2f'%gs.S2NYS_T))
-                self.TableOpt2.setItem(1,7,Qitem('%.2f'%(gs.S1NYS_T+gs.S2NYS_T)))
-                self.TableOpt2.setItem(2,1,Qitem('%.2f'%gs.w3opt))
-                self.TableOpt2.setItem(2,6,Qitem('%.2f'%gs.S1NYS_T))
-                self.TableOpt2.setItem(2,7,Qitem('%.2f'%gs.S2NYS_T))
     def OptClicked(self):
         ab = gs.B-gs.A
         ab2 = gs.B2-gs.A2
@@ -825,7 +853,6 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             model.cxs1 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))
             model.sxs2 = pe.Var(initialize=0.5, bounds=( 0 , 1))
             model.cxs2 = pe.Var(initialize=math.sqrt(3) / 2, bounds=(0, 1))    
-
         model.Con = pe.ConstraintList()
         model.Con.add(expr=(model.sxm2 ** 2 + model.cxm2 ** 2 - 1) == 0)
         model.Con.add(expr=(model.sxm1 ** 2 + model.cxm1 ** 2 - 1) == 0)
@@ -840,7 +867,6 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             model.Con.add(model.sxs2*model.cxs1-model.cxs2*model.sxs1<=0)
         else:
             print(gs.KBEW)
-
 
         if (gs.DriveType=='Standard'):
             # standard system, 1 and 2 are in inlien position
@@ -878,7 +904,6 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             model.Con.add(expr = sOff>=0  ) # off alfa must be the same sign to avoid cross inline position
             #model.Con.add(expr = sNYK_T*cxm21+cNYK_T*sxm21 >=0) # alpha+offsetangle <180, cannot cover inline position
             #model.Con.add(eval(F_M1NYK_T) ** 2 <= (math.cos(14 * math.pi / 180)) ** 2) #NYK_T<76
-
 
         if gs.MechanicType =='Center':                                   
             model.link2 = pe.Var(initialize=gs.CD2, bounds=(4.4 * gs.BC2, 10 * gs.BC2))  # length of link
@@ -951,18 +976,18 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             sxs2 = pe.value(model.sxs2)
             cxs2 = pe.value(model.cxs2)
             
-            gs.xm1 = Func.getDegree(cxm1, sxm1)
-            gs.xm2 = Func.getDegree(cxm2, sxm2)
-            gs.xs1 = Func.getDegree(cxs1, sxs1)
-            gs.xs2 = Func.getDegree(cxs2, sxs2)
+            gs.xm1b = Func.getDegree(cxm1, sxm1)
+            gs.xm2b = Func.getDegree(cxm2, sxm2)
+            gs.xs1b = Func.getDegree(cxs1, sxs1)
+            gs.xs2b = Func.getDegree(cxs2, sxs2)
             
             
-            gs.CD = (pe.value((model.link)))
-            gs.ED = (pe.value(model.outCrank))
-            M1NYS_T = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYS_Tv)))
-            M2NYS_T = Func.degree(math.pi / 2 - math.acos(pe.value(M2NYS_Tv)))
-            M1NYK_T = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYK_Tv)))
-            M1NYK_T = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYK_Tv)))
+            gs.CDb = (pe.value((model.link)))
+            gs.EDb = (pe.value(model.outCrank))
+            M1NYS_Tb = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYS_Tv)))
+            M2NYS_Tb = Func.degree(math.pi / 2 - math.acos(pe.value(M2NYS_Tv)))
+            M1NYK_Tb = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYK_Tv)))
+            M1NYK_Tb = Func.degree(math.pi / 2 - math.acos(pe.value(M1NYK_Tv)))
 
             sxm12 = pe.value(model.sxm12)
             cxm12 = pe.value(model.cxm12)
@@ -973,18 +998,24 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             sxs22 = pe.value(model.sxs22)
             cxs22 = pe.value(model.cxs22)
 
-            gs.xs22 = Func.getDegree(cxs22, sxs22)
-            gs.xs12 = Func.getDegree(cxs12, sxs12)
-            gs.xm22 = Func.getDegree(cxm22, sxm22)
-            gs.xm12 = Func.getDegree(cxm12, sxm12)
-            gs.CD2 = (pe.value((model.link2)))
-            gs.ED2 = (pe.value(model.outCrank2))
-            
+            gs.xs22b = Func.getDegree(cxs22, sxs22)
+            gs.xs12b = Func.getDegree(cxs12, sxs12)
+            gs.xm22b = Func.getDegree(cxm22, sxm22)
+            gs.xm12b = Func.getDegree(cxm12, sxm12)
+            gs.CD2b = (pe.value((model.link2)))
+            gs.ED2b = (pe.value(model.outCrank2))
+         
             # =============================================================================
-            S1NYS_T = Func.degree(math.pi / 2 - math.acos(pe.value(S1NYS_Tv)))
-            S2NYS_T = Func.degree(math.pi / 2 - math.acos(pe.value(S2NYS_Tv)))
-            S1NYK_T = Func.degree(math.pi / 2 - math.acos(pe.value(S1NYK_Tv)))
-            S2NYK_T = Func.degree(math.pi / 2 - math.acos(pe.value(S2NYK_Tv)))
+            gs.S1NYS_Tb = Func.degree(math.pi / 2 - math.acos(pe.value(S1NYS_Tv)))
+            gs.S2NYS_Tb = Func.degree(math.pi / 2 - math.acos(pe.value(S2NYS_Tv)))
+            gs.S1NYK_Tb = Func.degree(math.pi / 2 - math.acos(pe.value(S1NYK_Tv)))
+            gs.S2NYK_Tb = Func.degree(math.pi / 2 - math.acos(pe.value(S2NYK_Tv)))
+            
+            gs.w2optb = Func.wipAngle(gs.xs2b,gs.xs1b,gs.KBEW)
+            gs.w3optb = Func.wipAngle(gs.xs22b,gs.xs12b,gs.KBEW)
+            self.rounding()
+            self.rounding2()
+
         else: # Master-Slave
                     #--- master link
             model.obj=pe.Objective(expr=(model.cxs2*model.cxs1+model.sxs2*model.sxs1-math.cos(gs.w2))**2) # minmize wipping angle error
@@ -993,7 +1024,6 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             # =============================================================================
             model.Con.add((eval(F_M1NYS_T)) + (eval(F_M2NYS_T)) == 0)
             model.Con.add(eval(F_M1NYS_T)**2<=(math.cos(40*math.pi/360))**2)#NYS_T<50
-
 
             # =============================================================================
             opt = pe.SolverFactory('ipopt')
@@ -1027,7 +1057,6 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
                 gs.xs3b=Func.getDegree(cxs3,sxs3)
                 gs.xm3b=Func.getDegree(cxm3,sxm3)
 
-
             M1NYS_Tv = eval(F_M1NYS_T)
             M2NYS_Tv = eval(F_M2NYS_T)
             M1NYK_Tv = eval(F_M1NYK_T)
@@ -1050,52 +1079,7 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
                 gs.Alfab = 360
 
             gs.w2optb = Func.wipAngle(gs.xs2b,gs.xs1b,gs.KBEW)
-            
-
-            gs.CD=round(gs.CDb,1)
-            gs.ED=round(gs.EDb,1)
-            gs.xm1 = gs.xm1b
-            gs.xm2 = gs.xm2b
-            if gs.DriveType=='Reversing':
-                gs.Alfa = round(gs.Alfab,1)
-                gs.offsetAngle = round(gs.offsetAngleb,1)
-                Equal1inline = repr(equal1[0]).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC') # link length equation for master link
-                Equal2inline = repr(equal2).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC')
-                EqualInline = [Equal1inline,Equal2inline]
-                def Finline(angle):
-                    F1 = eval(Equal1inline)
-                    F2 = 1000*(eval(Equal2inline)**2-1)
-                    return([F1,F2])
-                if gs.KBEW =='+x':
-                    [xim1,xis1]= op.fsolve(Finline,[0,0])
-                else :
-                    [xim1,xis1] = op.fsolve(Finline,[math.pi,math.pi])
-
-                #[xim2,xis2]= op.fsolve(Finline,[math.pi,math.pi])
-                #gs.xm1 = gs.xm3+gs.offsetAngle
-                gs.xm1 = gs.xm1b
-                gs.xm2 = gs.xm1+gs.Alfa
-            else:
-                gs.offsetAngle = 0
-                gs.Alfa = 360
-
-            gs.Ra_Rb = float(gs.BC/gs.CD)
-            outM1=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm1,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Master -UWL,[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
-            outM2=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm2,gs.A,gs.B,gs.E,gs.F,KBEW= gs.KBEW) #Master-OWL [alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
-
-            gs.xs1 = outM1[1]
-            gs.xs2 = outM2[1]
-            # cxs1 = math.cos(Func.rad(gs.xs1))
-            # cxs2 = math.cos(Func.rad(gs.xs2))
-            # sxs1 = math.sin(Func.rad(gs.xs1))
-            # sxs2 = math.sin(Func.rad(gs.xs2))
-            gs.w2opt = Func.wipAngle(gs.xs2,gs.xs1,gs.KBEW)
-
-            gs.M1NYS_T=outM1[2]
-            gs.M2NYS_T=outM2[2]
-            gs.M1NYK_T=outM1[4]
-            gs.M2NYK_T=outM2[4]
-
+            self.rounding()
             #=============================================================================
 
             #slave  link
@@ -1190,35 +1174,16 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             gs.S1NYK_Tb=Func.degree(math.pi/2-math.acos(pe.value(S1NYK_Tv)))
             gs.S2NYK_Tb=Func.degree(math.pi/2-math.acos(pe.value(S2NYK_Tv)))
 
-            
             gs.w3optb = Func.wipAngle(gs.xs22b,gs.xs12b,gs.KBEW2)
 
             ###rounding
-            gs.CD2=round(gs.CD2b,1)
-            if gs.MechanicType =='Center':
-                gs.ED2= round(gs.ED2b,1)
-            else:
-                gs.BC2=round(gs.BC2,1)
-            gs.xm12 = gs.xm12b
-            gs.xm22 = gs.xm2b
-            gs.Ra_Rb2=float(gs.BC2/gs.CD2)
-            outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave UWL
-            outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave OWL
-            #[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],D[0][0],D[0][1],D[0][2]]
-            gs.xs12 = outS3[1]
-            gs.xs22 = outS4[1]
-            gs.w3opt=Func.angleDiff(gs.xs22,gs.xs12)
-            S1NYS_T=outS3[2]
-            S2NYS_T=outS4[2]
-
+            self.rounding2()
 
             # outM1=[float(s) for s in outM1]
             # outM2=[float(s) for s in outM2]
             # outS3=[float(s) for s in outS3]
             # outS4=[float(s) for s in outS4]
             # write to output sheet
-            
-   
         
             print('--------optimization completed------------')
 
@@ -1232,7 +1197,6 @@ class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
         self.setupUi(self)
         self.initiInput()
        # self.LoadClicked()
-
 
     def UpdateOptValue(self):
         print('update opt value')
@@ -1307,8 +1271,8 @@ class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
         self.TextW2.setText(Func.read(gs.sheet1,16,6))
         self.TextW3.setText(Func.read(gs.sheet1,16,10))
         self.comboMeasured.setCurrentText (Func.read(gs.sheet1,16,17).strip())
-        self.comboBoxNo2.setCurrentText   (Func.read(gs.sheet1,35,7).strip())
-        self.comboBoxNo3.setCurrentText   (Func.read(gs.sheet1,52,7).strip())
+        self.comboNo2.setCurrentText   (Func.read(gs.sheet1,35,7).strip())
+        self.comboNo3.setCurrentText   (Func.read(gs.sheet1,52,7).strip())
         self.tableMotorAngle.setItem(0,0,Qitem(Func.read(gs.sheet1,24,4)))
         self.tableMotorAngle.setItem(0,1,Qitem(Func.read(gs.sheet1,24,9)))
         self.tableMotorAngle.setItem(0,2,Qitem(Func.read(gs.sheet1,24,13)))
@@ -1491,7 +1455,7 @@ class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
         gs.errorN.Ap_Y   = float(self.tableMotorInfo.item(6,2).text())
         gs.errorN.Ap_Z   = float(self.tableMotorInfo.item(7,2).text())
 
-        gs.Master =  QtWidgets.QComboBox.currentText(self.comboBoxNo2)
+        gs.Master =  QtWidgets.QComboBox.currentText(self.comboNo2)
         gs.w2          = float(self.TextW2.text())
         gs.w3          = float(self.TextW3.text())
         
@@ -1706,7 +1670,7 @@ class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
         Func.write(gs.sheet1,64,19,gs.errorN.ED2)
 
         gs.preTreat()
-        Func.writeInputjson(inputjson,inputs,gs)
+        Func.writejson(inputjson,inputs,gs)
         gs.wb.save(gs.template_path)
         print('save input configuration')
                 # pre-treatment
@@ -1805,24 +1769,7 @@ if __name__ == "__main__":
 
     gs = parameters.GS()
     inputs= parameters.Inputs()
-    def logSetting():
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)  
-        rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
-        log_path = os.getcwd() + '/Logs/'
-        if not os.path.exists(log_path):
-            os.makedirs(log_path)
-
-        log_name = log_path + rq + '.log'
-        logfile = log_name
-        fh = logging.FileHandler(logfile, mode='w')
-        fh.setLevel(logging.DEBUG) 
-
-        formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
-        return logger
-    logger = logSetting()
+    logger = Func.logSetting()
 
     timeStamp=int(time.time())
     timeArray=time.localtime(timeStamp)
@@ -1839,14 +1786,15 @@ if __name__ == "__main__":
         backend = False
     if backend:
         app = QtWidgets.QApplication(sys.argv)
-        Func.LoadInputJson(inputjson,inputs,gs)
+        Func.LoadJson(inputjson,inputs,gs)
         gs.preTreat()
-        
 
         mainWindow = MainWindow()
-        mainWindow.WindowOpt.OptClicked(gs)
-        mainWindow.WindowAlpha.alphaTable(gs)
-        mainWindow.WindowExtreme.ExtremeTable(gs)
+        mainWindow.WindowOpt.OptClicked()
+        mainWindow.WindowAlpha.alphaTable()
+        mainWindow.WindowExtreme.ExtremeTable()
+        outputs= parameters.Outputs()
+        Func.writejson(outputjson,outputs,gs)
     
 
     else:

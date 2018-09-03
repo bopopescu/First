@@ -196,7 +196,25 @@ class Inputs(error):
 
 
 class GS(Inputs):
-    
+    # Tolerance
+    no = 0              # which crank to be calculated, 2 means master crank ,3 means slave crank(N2 column)
+    Parameter=[]        # list to store the paramter to be used for tolerance check(parameter column)
+    kpiList = []        # list to store the value of parameter(e.g BC) when reaching the largest deviation (Dimension column)
+    w2List=[]           # list to store the value of target function(e.g w2) when reaching the largest deviation(Function value column)
+    w2ErrorList = []    # list to store the deviation of target function
+    #alphanumeric
+    outKPIall= []       # dataframe to store the kpi info  after alphanumeric calculation        
+    #cols =['alpha','beta','beta_s','beta_ss','NYS_T','NYS_A','NYK_T','NYK_A']+['beta2','beta_s2','beta_ss2','NYS_T2','NYS_A2','NYK_T2','NYK_A2']
+    outCordinateall = []# dataframe to store the cordinate info after alphanumeric calculation
+    # colsCordinate=['Cx','Cy','Cz','Dx','Dy','Dz']+['Cx2','Cy2','Cz2','Dx2','Dy2','Dz2']
+
+
+    w2cal = 0.
+    w3cal = 0.
+
+
+    listOpt1 = []
+    listOpt2 = []
     A = np.ones(3)
     B = np.ones(3)
     E = np.ones(3)
@@ -281,6 +299,7 @@ class GS(Inputs):
     KBEW = '-x'
     KBEW2 = '-x'
     startFrom = ''
+    parameterOpt =''
     A_X = 0.
     A_Y = 0.
     A_Y = 0.
@@ -449,6 +468,7 @@ class GS(Inputs):
             self.errorN.Ap_Z2 = self.errorN.Ap_Z
             self.Distance2=(self.Distance+self.Distance2)
             self.B2 = Func.point(self.A2,self.Ap2,self.Distance2)
+            self.parameterOpt = 'ED'
         else:
             self.A2 = self.E.copy()
             self.Ap2 = self.F.copy()
@@ -471,6 +491,7 @@ class GS(Inputs):
             self.errorN.Ap_Y2 = self.errorN.F_Y
             self.errorN.Ap_Z2 = self.errorN.F_Z
             self.B2 = Func.point(self.A2,self.Ap2,self.Distance2)
+            self.parameterOpt = 'BC'
       
     def preTreat(self):
         
@@ -575,6 +596,7 @@ class GS(Inputs):
             self.offsetAngle = self.offsetAngle
 
 class Outputs():
+      
       CD = 0.
       ED = 0.
       Ra_Rb = 0.
@@ -583,7 +605,37 @@ class Outputs():
       CD2 = 0.
       ED2 = 0.
       Ra_Rb2 = 0.
+      listOpt1 = []
+      listOpt2 = []
+      startFrom = ''
+      w2Target = 0.
+      w3Target = 0.
+      parameterOpt = ''
       w3actual = 0.
+      w2opt = 0.
+      w3opt = 0.
+      M1NYS_T = 0.
+      M2NYS_T = 0.
+      S1NYS_T = 0.
+      S2NYS_T = 0.
+      outKPIall= []
+      outCordinateall = []
+      maxArray =[]
+      minarray=[]
+      maxArray2 = []
+      minArray2 = []
+      step = 0.
+      w2cal = 0
+      w3cal = 0
+          # Tolerance
+      no = 0              # which crank to be calculated, 2 means master crank ,3 means slave crank(N2 column)
+      Parameter=[]        # list to store the paramter to be used for tolerance check(parameter column)
+      kpiList = []        # list to store the value of parameter(e.g BC) when reaching the largest deviation (Dimension column)
+      w2List=[]           # list to store the value of target function(e.g w2) when reaching the largest deviation(Function value column)
+      w2ErrorList = []    # list to store the deviation of target function
+     
+      
+      
 
     
 
