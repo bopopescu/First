@@ -17,7 +17,7 @@ import base64
 import os
 import sys
 
-import matplotlib
+
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
@@ -36,11 +36,16 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QBrush, QColor
 import pyomo.environ as pe
 
-class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget,QTabWidget
+
+import Fig
+
+class MainWindow(QTabWidget, ui.Ui_MainWindow):
     def __init__(self,parent=None):
         super(MainWindow,self).__init__(parent)
         self.setWindowTitle("Kinematics  Calculation of wiper linkage")
         self.resize(1000, 1000)
+        
         # window_pale = QtGui.QPalette()
         # window_pale.setColor(self.backgroundRole(),QColor(0,0,255))
         # self.setPalette(window_pale)
@@ -65,27 +70,35 @@ class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
         self.WindowInput.OutputButton.clicked.connect(self.WindowInput.close)
         self.WindowInput.OutputButton.clicked.connect(self.WindowAlpha.show)
         self.WindowInput.OutputButton.clicked.connect(self.resetAlpha)       # move to output sheet
-        self.WindowOpt.pushButton.clicked.connect(self.WindowOpt.OptClicked)
-        self.WindowOpt.pushButton.clicked.connect(self.WindowOpt.setOptItem)
+        self.WindowOpt.pushButton.clicked.connect(self.WindowOpt.OptClicked) # opt
+        self.WindowOpt.pushButton.clicked.connect(self.WindowOpt.setOptItem) # set itmes in optimization sheet
 
-        self.WindowAlpha.TableButton.clicked.connect(self.WindowAlpha.alphaTable)
-        self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowExtreme.ExtremeTable)
-        self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowAlpha.close)
-        self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowExtreme.show)
+        self.WindowAlpha.TableButton.clicked.connect(self.WindowAlpha.alphaTable)  # do alphanumeric calculation
+        #self.WindowAlpha.plotButton.clicked.connect(lambda: self.WindowAlpha.plot(gs.outKPIall))  # do alphanumeric calculation
+        self.WindowAlpha.plotButton.clicked.connect(self.WindowAlpha.plot)  # do alphanumeric calculation
+        #self.WindowAlpha.plotButton.clicked.connect(figs.show)  # do alphanumeric calculation
+       # self.WindowAlpha.AnimationButton.clicked.connect(self.WindowAlpha.animate)  # do alphanumeric calculation
+        
+        self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowExtreme.ExtremeTable) # do extremetable calculation
+        self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowAlpha.close)          
+        self.WindowAlpha.ExtremeButton.clicked.connect(self.WindowExtreme.show)         # move to extreme tab
         self.WindowAlpha.ExtremeButton.clicked.connect(self.reset2)
         
         self.WindowInput.ToleranceButton.clicked.connect(self.WindowInput.close)
-        self.WindowInput.ToleranceButton.clicked.connect(self.WindowTolerance.show)
+        self.WindowInput.ToleranceButton.clicked.connect(self.WindowTolerance.show)      # move to tolerance tab
         self.WindowInput.ToleranceButton.clicked.connect(self.resetTolerance)
         
-        self.WindowTolerance.ButtonCal.clicked.connect(self.WindowTolerance.Tolerance)
+        self.WindowTolerance.ButtonCal.clicked.connect(self.WindowTolerance.Tolerance)   # do tolerance calculation
 
-        self.WindowInput.SaveButton.clicked.connect(self.writeMainCordinate)
+        self.WindowInput.SaveButton.clicked.connect(self.writeMainCordinate)             # write cordinate
         self.WindowInput.SaveButton.clicked.connect(self.writeDetailCordinate)
         self.WindowInput.SaveButton.clicked.connect(self.WindowInput.updateNewsheet)
-        self.WindowInput.SaveButton.clicked.connect(self.saveExcel)
+        self.WindowInput.SaveButton.clicked.connect(self.saveExcel)                      # save excel
+        self.WindowInput.SaveButton.clicked.connect(self.writejson)                      # save excel
 
-
+    def writejson(self):
+        outputjson ='output.json'
+        Func.writejson(outputjson,outputs,gs)
     def saveExcel(self):
         gs.wb.save(gs.excel_out)
         print('save completed')
@@ -94,7 +107,7 @@ class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
         outM2=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm2,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW) #Master-OWL [alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
         outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave UWL
         outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave OWL
-        gs.listWrite = []
+        
         if gs.MechanicType =='Center':
             outM3=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm12,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Slave -UWL, 
             outM4=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm22,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Slave -OWL, 
@@ -106,11 +119,11 @@ class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
             else :
                 array =  [gs.A,gs.Ap,gs.B2,gs.B , gs.F2, gs.Fp2, gs.E2, gs.F,gs.Fp,gs.E,outS1[6:12],outM1[6:12],
                 outS1[6:12],outM1[6:12],outS2[6:12],outM2[6:12],outS3[6:12],outM3[6:12],outS4[6:12],outM4[6:12]]
-            gs.listWrite =[y for x in array for y in x]
-            num = len(gs.listWrite)
+            gs.CordinateList =[y for x in array for y in x]
+            num = len(gs.CordinateList)
     
             for i in range(num):
-                Func.write(gs.sheetDesign1,i+1,2,'%.4f'%gs.listWrite[i])
+                Func.write(gs.sheetDesign1,i+1,2,'%.4f'%gs.CordinateList[i])
             gs.wb1.save(filename=gs.excel_design1)
         
         else:
@@ -121,16 +134,15 @@ class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
 
                 array = [gs.A,gs.Ap,gs.F2,gs.Fp2,gs.F,gs.Fp ,gs.B2, gs.E2, gs.B, gs.E,outS3[6:12],outM1[6:12],
                 outS3[6:12],outM1[6:12],outS4[6:12],outM2[6:12]]
-            gs.listWrite =[y for x in array for y in x]
-            num = len(gs.listWrite)
+            gs.CordinateList =[y for x in array for y in x]
+            num = len(gs.CordinateList)
     
             for i in range(num):
-                Func.write(gs.sheetDesign1,i+1,2,'%.4f'%gs.listWrite[i])
+                Func.write(gs.sheetDesign1,i+1,2,'%.4f'%gs.CordinateList[i])
             gs.wb1.save(filename=gs.excel_design1)
 
     def writeDetailCordinate (self):
             alphaList = np.linspace(gs.xm1,gs.xm1+360,12,endpoint =False)
-            gs.listWrite2 =[]
             for alpha in alphaList:
                 if gs.MechanicType =='Center' :
                     outM=   Func.Output(gs.BC,gs.CD,gs.ED,alpha,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #
@@ -140,14 +152,14 @@ class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
                     alpha2 =outM[1]+gs.Delta2 
                     outS =  Func.Output(gs.BC2,gs.CD2, gs.ED2,alpha2,gs.A2,gs.B2, gs.E2, gs.F2, KBEW=gs.KBEW2)  #
                 if gs.Master =='driver side':                     
-                    gs.listWrite2.extend(outM[6:12])
-                    gs.listWrite2.extend(outS[6:12])
+                    gs.CordinateDetailList.extend(outM[6:12])
+                    gs.CordinateDetailList.extend(outS[6:12])
                 else:
-                    gs.listWrite2.extend(outS[6:12])
-                    gs.listWrite2.extend(outM[6:12])
-            num = len(gs.listWrite2)
+                    gs.CordinateDetailList.extend(outS[6:12])
+                    gs.CordinateDetailList.extend(outM[6:12])
+            num = len(gs.CordinateDetailList)
             for i in range(num):
-                Func.write(gs.sheetDesign2,i+1,2,'%.4f'%gs.listWrite2[i])
+                Func.write(gs.sheetDesign2,i+1,2,'%.4f'%gs.CordinateDetailList[i])
 
             gs.wb2.save(filename=gs.excel_design2)
                     
@@ -179,13 +191,13 @@ class MainWindow(QtWidgets.QTabWidget, ui.Ui_MainWindow):
         self.addTab(self.WindowOpt,u"optimization")
         self.addTab(self.WindowAlpha,u"AlphaNumeric")
 # =============================================================================
-class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
+class MainWindow_Tolerance(QMainWindow,ui.Ui_Tolerance):
     def __init__(self,parent=None):
         super(MainWindow_Tolerance,self).__init__(parent)
         self.setupUi(self)
         
     def Tolerance(self):
-        noCrank = self.comboLink.currentText() #Master,Slave
+        gs.noCrank = self.comboLink.currentText() #Master,Slave
         obj = self.comboObj.currentText() #wipping angle,NYS_T
 
         listToleranceStrall = ["BC", "ED", 'Delta','CD',"F_X", "F_Y", "F_Z","Fp_X", "Fp_Y", "Fp_Z",'FE',"A_X", "A_Y", "A_Z","Ap_X", "Ap_Y", "Ap_Z",'Distance',
@@ -200,12 +212,12 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
         else:
                 print('please configure objective function')
                 
-        if noCrank=='Master':
+        if gs.noCrank=='Master':
                 listToleranceStr = listToleranceStrall[0:numTolerance]
                 Base = [eval('gs.'+st) for st in listToleranceStr]
                 Target = Func.Tolerance(Base,gs.xm1,gs.xm2)[t]
                 gs.no = 2
-        elif noCrank == 'Slave':
+        elif gs.noCrank == 'Slave':
                 listToleranceStr = listToleranceStrall[numTolerance:]
                 Base = [eval('gs.'+st) for st in listToleranceStr]
                 Target = Func.Tolerance(Base,gs.xm12,gs.xm22)[t]
@@ -213,7 +225,6 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
         else:
                 print('please configure noCrank')
 
-        
         errorPList = [ 'gs.errorP.'+t for t in listToleranceStr]
         errorPositive = [eval(t) for t in errorPList]
         errorNList = [ 'gs.errorN.'+t for t in listToleranceStr]
@@ -222,7 +233,7 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
         
         
         ToleranceValue = Base.copy()  # to be changed
-        if n==0: #master
+        if gs.noCrank=='Master': #master
                 for i in range(numTolerance):
                         Func.updateTolerance(ToleranceValue, gs.w2ErrorList, gs.w2List, gs.kpiList, i,  t,Target, errorPositive[i],
                                 errorNegative[i], gs.xm1, gs.xm2)
@@ -232,7 +243,7 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
                         arrayi[i] = Base[i]
                         Func.updateTolerance(arrayi, gs.w2ErrorList, gs.w2List, gs.kpiList, i, t,Target, errorPositive[i],
                                 errorNegative[i], gs.xm1, gs.xm2)
-        elif n==1:#slave
+        elif gs.noCrank == 'Slave':
                 for i in range(numTolerance):
                         Func.updateTolerance(ToleranceValue, gs.w2ErrorList, gs.w2List, gs.kpiList, i, t,Target,
                                              errorPositive[i],
@@ -254,7 +265,7 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
                 self.tableTolerance.setItem(i, 2, Qitem('%.4f'%gs.kpiList[i]))
                 self.tableTolerance.setItem(i, 3, Qitem('%.4f'%gs.w2List[i]))
                 self.tableTolerance.setItem(i, 4, Qitem('%.4f'%gs.w2ErrorList[i]))
-        Func.write(gs.sheet6,3,4,gs.n0)
+        Func.write(gs.sheet6,3,4,gs.no)
         Func.write(gs.sheet6,3,6,gs.index)
         startColumn = 2
         startRow = 10
@@ -267,25 +278,25 @@ class MainWindow_Tolerance(QtWidgets.QMainWindow,ui.Ui_Tolerance):
 
         print('Tolerance calculation completed')
 
-class MainWindow_extreme(QtWidgets.QMainWindow,ui.Ui_extreme):
+class MainWindow_extreme(QMainWindow,ui.Ui_extreme):
     def __init__(self,parent=None):
         super(MainWindow_extreme,self).__init__(parent)
         self.setupUi(self)
     def ExtremeTable(self):
         if gs.MechanicType =='Center':
-                UWL1 = gs.xm1+90
-                UWL2 = gs.xm12+90
+                gs.UWL1 = gs.xm2+90
+                gs.UWL2 = gs.xm2+90
         else:
-                UWL1 = gs.xm1 + 90
-                UWL2 = gs.xm1 + 90
+                gs.UWL1 = gs.xm2 + 90
+                gs.UWL2 = gs.xm22 + 90 #TBD
         if gs.DriveType =='Standard':
-                Park = gs.xm1+90
+                gs.Park = gs.xm1+90
         else:
-                Park = gs.xm1+90 #TBD
-        self.tableExtreme1.setItem(0, 2, Qitem('%.2f' % Park))
-        self.tableExtreme1.setItem(0, 3, Qitem('%.2f' % UWL1))
-        self.tableExtreme1_2.setItem(0, 2, Qitem('%.2f' % Park))
-        self.tableExtreme1_2.setItem(0, 3, Qitem('%.2f' % UWL2))
+                gs.Park = gs.xm1+90 #TBD
+        self.tableExtreme1.setItem(0, 2, Qitem('%.2f' % gs.Park))
+        self.tableExtreme1.setItem(0, 3, Qitem('%.2f' % gs.UWL1))
+        self.tableExtreme1_2.setItem(0, 2, Qitem('%.2f' % gs.Park))
+        self.tableExtreme1_2.setItem(0, 3, Qitem('%.2f' % gs.UWL2))
 
         self.tableExtreme1.setItem(0,0,Qitem('%.2f'%gs.w2Target))
         self.tableExtreme1.setItem(0,1,Qitem('%.2f'%gs.w2cal))
@@ -308,10 +319,10 @@ class MainWindow_extreme(QtWidgets.QMainWindow,ui.Ui_extreme):
         Func.write(gs.sheet5, 20, 6, gs.w3Target)
         Func.write(gs.sheet5, 21, 6, gs.w3cal)
 
-        Func.write(gs.sheet5, 3, 11, '%.2f' % Park)
-        Func.write(gs.sheet5, 4, 11, '%.2f' % UWL1)
-        Func.write(gs.sheet5, 20, 11, '%.2f' % Park)
-        Func.write(gs.sheet5, 21, 11, '%.2f' % UWL2)
+        Func.write(gs.sheet5, 3, 11, '%.2f' % gs.Park)
+        Func.write(gs.sheet5, 4, 11, '%.2f' % gs.UWL1)
+        Func.write(gs.sheet5, 20, 11, '%.2f' % gs.Park)
+        Func.write(gs.sheet5, 21, 11, '%.2f' % gs.UWL2)
 
         for i in range(10):
                 Func.write(gs.sheet5, startRow[0], startCol[0] + i, gs.maxArray[i])
@@ -328,13 +339,13 @@ class MainWindow_extreme(QtWidgets.QMainWindow,ui.Ui_extreme):
 
         print('extreme values complete')
 
-class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
+class MainWindow_alphaNumeric(QMainWindow,ui.Ui_alphaNumeric):
     def __init__(self,parent=None):
         super(MainWindow_alphaNumeric,self).__init__(parent)
         self.setupUi(self)
     @staticmethod
-    def animate(outCordinate):
-        matplotlib.matplotlib_fname()
+    def animate():
+
         number=gs.num
 
         Atemp=np.array([gs.A]*number).T
@@ -345,10 +356,10 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         B2temp=np.array([gs.B2]*number).T
         E2temp=np.array([gs.E2]*number).T
         F2temp=np.array([gs.F2]*number).T
-        Ctemp= np.array((outCordinate['Cx'],outCordinate['Cy'],outCordinate['Cz']))
-        Dtemp= np.array((outCordinate['Dx'],outCordinate['Dy'],outCordinate['Dz']))
-        C2temp= np.array((outCordinate['Cx2'],outCordinate['Cy2'],outCordinate['Cz2']))
-        D2temp= np.array((outCordinate['Dx2'],outCordinate['Dy2'],outCordinate['Dz2']))
+        Ctemp= np.array((gs.outCordinateall['Cx'],gs.outCordinateall['Cy'],gs.outCordinateall['Cz']))
+        Dtemp= np.array((gs.outCordinateall['Dx'],gs.outCordinateall['Dy'],gs.outCordinateall['Dz']))
+        C2temp= np.array((gs.outCordinateall['Cx2'],gs.outCordinateall['Cy2'],gs.outCordinateall['Cz2']))
+        D2temp= np.array((gs.outCordinateall['Dx2'],gs.outCordinateall['Dy2'],gs.outCordinateall['Dz2']))
         dataAB=np.r_[Atemp,Btemp]
         dataAB2=np.r_[A2temp,B2temp]
         dataEF=np.r_[Etemp,Ftemp]
@@ -409,7 +420,6 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         ymax = max (cordinateMax[1],cordinateMax[4])
         zmax = max (cordinateMax[2],cordinateMax[5])
         
-
         xxrange = xmax-xmin
         yrange = ymax-ymin
         zrange = zmax-zmin
@@ -480,50 +490,14 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         plt.legend()
         plt.show()
         #return gs.line_ani  
-    @staticmethod
-    def plot(outKPIall):
-            x=outKPIall['alpha']
-            plt.figure(1)
-            ax=plt.subplot(2,2,1)
-            plt.plot(x,outKPIall['beta'],'k--',label='Beta')
-            plt.plot(x,outKPIall['beta2'],'r--',label='Gamma')
-            plt.legend()
+    staticmethod
+    def plot(self):
+        self.figs = Fig.ApplicationWindow(gs)
+        self.figs.show( )
 
-            ax=plt.subplot(2,2,2)
-            plt.plot(x,outKPIall['beta_s'],'k--',label='B-S')
-            plt.plot(x,outKPIall['beta_s2'],'r:',label='G-S')
-            plt.legend()
-
-            ax=plt.subplot(2,2,3)
-            l3=plt.plot(x,outKPIall['beta_ss'],'k--',label='B-SS')
-            l4=plt.plot(x,outKPIall['beta_ss2'],'r:',label='G-SS')
-            plt.legend()
-            plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_Angle'+gs.styleTime+'.jpg')
-
-            plt.figure(2)
-            ax=plt.subplot(2,2,1)
-            plt.plot(x,outKPIall['NYS_T'],'k--',label='NYS_T')
-            plt.plot(x,outKPIall['NYS_T2'],'r:',label='NYS_T2')
-            plt.legend()
-
-            ax=plt.subplot(2,2,2)
-            plt.plot(x,outKPIall['NYK_T'],'k--',label='NYK_T')
-            plt.plot(x,outKPIall['NYK_T2'],'r:',label='NYK_T2')
-            plt.legend()
-
-            ax=plt.subplot(2,2,3)
-            plt.plot(x,outKPIall['NYS_A'],'k--',label='NYS_A')
-            plt.plot(x,outKPIall['NYS_A2'],'r:',label='NYS_A2')
-            plt.legend()
-
-            ax=plt.subplot(2,2,4)
-            plt.plot(x,outKPIall['NYK_A'],'k--',label='NYK_A')
-            plt.plot(x,outKPIall['NYK_A2'],'r:',label='NYK_A2')
-            plt.legend()
-            plt.savefig('.\\output\\pics\\'+gs.ProjectName+'_NY'+gs.styleTime+'.jpg')
     
     def getextreme(self):
-        n = len(outKPIall.columns) 
+        n = len(gs.outKPIall.columns) 
         
         assert (n%2==1)
         n1 = int((n+1)/2) # master part
@@ -548,7 +522,7 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
         gs.w3cal=gs.maxArray2[1]-gs.minArray2[1]
         print('w2=%.2f'%gs.w2cal+'\tw3=%.2f'%gs.w3cal)
         
-        return [maxArray,minArray,maxArray2,minArray2]
+        return [gs.maxArray,gs.minArray,gs.maxArray2,gs.minArray2]
         #outCordinate.to_excel('outputCordinate.xlsx')
         
         #Range=[1.2,50,8,90,8]# 90 TBD
@@ -626,8 +600,8 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
             colsCordinate2=['Cx2','Cy2','Cz2','Dx2','Dy2','Dz2']
             colsCordinateall = colsCordinate + colsCordinate2
             # =============================================================================
-            outKPIall = outall.loc[:,colskpi]
-            outCordinateall = outall.loc[:,colsCordinateall]
+            gs.outKPIall = outall.loc[:,colskpi]
+            gs.outCordinateall = outall.loc[:,colsCordinateall]
            
             # outKPI['NYS_T']=outKPI['NYS_T'].astype('float64')
             # outKPI['NYS_A']=outKPI['NYS_A'].astype('float64')
@@ -637,7 +611,7 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
             # outKPI2['NYS_A2']=outKPI2['NYS_A2'].astype('float64')
             # outKPI2['NYK_T2']=outKPI2['NYK_T2'].astype('float64')
             # outKPI2['NYK_A2']=outKPI2['NYK_A2'].astype('float64')
-            return [outKPIall, outCordinateall]
+            return [gs.outKPIall, gs.outCordinateall]
     
     def writealphaNumeric(self):
         startRow = 10
@@ -649,16 +623,15 @@ class MainWindow_alphaNumeric(QtWidgets.QMainWindow,ui.Ui_alphaNumeric):
                 Func.write(gs.sheet4,startRow+i , startCol+j , gs.outKPIall.iloc[i,j])
         Func.write(gs.sheet4,3,6,gs.step)
     def alphaTable(self):
-        time_start = time.time()
         [gs.outKPIall, gs.outCordinateall] = self.getoutall()
         self.writealphaNumeric()
         self.getextreme()
-        self.plot(gs.outKPIall)
+        #self.plot(gs.outKPIall)
 
     #animation
 
     
-class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
+class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
     def __init__(self,parent=None):
         super(MainWindow_Opt,self).__init__(parent)
         self.setupUi(self)
@@ -687,9 +660,10 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
                 for i,item in enumerate(gs.listOpt2):
                     for j,par in enumerate(item):
                         self.TableOpt2.setItem(i,j,Qitem('%.4f'%par))
-                self.TableOpt.setItem(2,1,Qitem('%.2f'%gs.w3opt))
-                self.TableOpt.setItem(2,6,Qitem('%.2f'%gs.S1NYS_T))
-                self.TableOpt.setItem(2,7,Qitem('%.2f'%gs.S2NYS_T))
+                self.TableOpt2.setItem(2,1,Qitem('%.2f'%gs.w3opt))
+                self.TableOpt2.setItem(2,6,Qitem('%.2f'%gs.S1NYS_T))
+                self.TableOpt2.setItem(2,7,Qitem('%.2f'%gs.S2NYS_T))
+
                 self.textEdit_3.setText(gs.parameterOpt)
                 self.TextW2.setText('%.4f'%gs.w2Target)
                 self.TextW3.setText('%.4f'%gs.w3Target)
@@ -721,6 +695,7 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
         if gs.DriveType=='Reversing':
             gs.Alfa = round(gs.Alfab,1)
             gs.offsetAngle = round(gs.offsetAngleb,1)
+            [equal1,equal2,NYK_T,NYS_T,Dbx,Dby,Dbz] = Func.OutputSymbol  (gs.A,gs.B,gs.E,gs.F)
             Equal1inline = repr(equal1[0]).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC') # link length equation for master link
             Equal2inline = repr(equal2).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC')
             EqualInline = [Equal1inline,Equal2inline]
@@ -750,10 +725,10 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
         # sxs1 = math.sin(Func.rad(gs.xs1))
         # sxs2 = math.sin(Func.rad(gs.xs2))
         gs.w2opt = Func.wipAngle(gs.xs2,gs.xs1,gs.KBEW)
-        gs.M1NYS_T=outM1[2]
-        gs.M2NYS_T=outM2[2]
-        gs.M1NYK_T=outM1[4]
-        gs.M2NYK_T=outM2[4]
+        gs.M1NYS_T=float(outM1[2])
+        gs.M2NYS_T=float(outM2[2])
+        gs.M1NYK_T=float(outM1[4])
+        gs.M2NYK_T=float(outM2[4])
 
     def OptClicked(self):
         ab = gs.B-gs.A
@@ -1080,6 +1055,12 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
 
             gs.w2optb = Func.wipAngle(gs.xs2b,gs.xs1b,gs.KBEW)
             self.rounding()
+            # calculate cos,sin of  S angle after rounding
+            cxs1 = math.cos(Func.rad(gs.xs1))
+            cxs2 = math.cos(Func.rad(gs.xs2))
+            sxs1 = math.sin(Func.rad(gs.xs1))
+            sxs2 = math.sin(Func.rad(gs.xs2))
+        
             #=============================================================================
 
             #slave  link
@@ -1162,18 +1143,19 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
             gs.xs12b=Func.getDegree(cxs12,sxs12)
             gs.xm22b=Func.getDegree(cxm22,sxm22)
             gs.xm12b=Func.getDegree(cxm12,sxm12)
-            gs.Delta2b=Func.getDegree(cDelta2,sDelta2)
+            gs.Delta2=Func.getDegree(cDelta2,sDelta2)
             gs.CD2b=  (pe.value((model2.link2)))
             gs.ED2b=(pe.value(model2.outCrank2))
             S1NYS_Tv = eval(F_S1NYS_T)
             S2NYS_Tv = eval(F_S2NYS_T)
             S1NYK_Tv = eval(F_S1NYK_T)
             S2NYK_Tv = eval(F_S2NYK_T)
+            
             gs.S1NYS_Tb=Func.degree(math.pi/2-math.acos(pe.value(S1NYS_Tv)))
             gs.S2NYS_Tb=Func.degree(math.pi/2-math.acos(pe.value(S2NYS_Tv)))
             gs.S1NYK_Tb=Func.degree(math.pi/2-math.acos(pe.value(S1NYK_Tv)))
             gs.S2NYK_Tb=Func.degree(math.pi/2-math.acos(pe.value(S2NYK_Tv)))
-
+            
             gs.w3optb = Func.wipAngle(gs.xs22b,gs.xs12b,gs.KBEW2)
 
             ###rounding
@@ -1191,7 +1173,7 @@ class MainWindow_Opt(QtWidgets.QMainWindow,ui.Ui_Optimization):
         gs.writeGS()
         gs.startCal()
 
-class MainWindow_Input(QtWidgets.QMainWindow,ui.Ui_Input):
+class MainWindow_Input(QMainWindow,ui.Ui_Input):
     def __init__(self,parent=None):
         super(MainWindow_Input,self).__init__(parent)
         self.setupUi(self)
@@ -1769,6 +1751,7 @@ if __name__ == "__main__":
 
     gs = parameters.GS()
     inputs= parameters.Inputs()
+    outputs= parameters.Outputs()
     logger = Func.logSetting()
 
     timeStamp=int(time.time())
@@ -1793,7 +1776,7 @@ if __name__ == "__main__":
         mainWindow.WindowOpt.OptClicked()
         mainWindow.WindowAlpha.alphaTable()
         mainWindow.WindowExtreme.ExtremeTable()
-        outputs= parameters.Outputs()
+        
         Func.writejson(outputjson,outputs,gs)
     
 
