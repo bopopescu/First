@@ -9,6 +9,7 @@ import math
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import openpyxl as xl
 import scipy.optimize as op
 import sympy as sp
@@ -26,6 +27,20 @@ import os
 from sympy.parsing.sympy_parser import parse_expr
 
 #from openpyxl.utils import range_boundarie
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.float64):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj,pd.DataFrame):
+            return obj.to_dict()
+        elif isinstance(obj,sp.Float):
+            return float(obj)
+        else:
+            return super(MyEncoder, self).default(obj)
 
 def extractattr(c):
     name = dir(c)
@@ -51,8 +66,9 @@ def writejson(jsonPath,input,gs):
             DictErrorN[var] = getattr(gs.errorN, var)
             DictInput['errorP'] = DictErrorP
             DictInput['errorN'] = DictErrorN
-        jStr = json.dumps(DictInput)
-        with open(jsonPath,'w') as f:
+
+    jStr = json.dumps(DictInput,cls = MyEncoder)
+    with open(jsonPath,'w') as f:
             f.write(jStr)
 
 def LoadJson(jsonPath,input,gs):
@@ -62,21 +78,24 @@ def LoadJson(jsonPath,input,gs):
     nameInput = extractattr(input)
 
     if hasattr(input,'errorP'):
+
         nameInput.remove('errorP')
-        nameInput.remove('errorN')
-        nameError = extractattr(input.errorP)
-        DictErrorP = Dict['errorP'] 
-        DictErrorN = Dict['errorN']
-        for var in nameError:
-            setattr(gs.errorP,var,DictErrorP[var])
-            setattr(gs.errorN,var,DictErrorN[var])
-            
+        nameInput.remove('errorN') 
+    
+
     for variable in nameInput:
-        setattr(gs,variable,Dict[variable])
+        if variable =='outKPIall' or variable=='outCordinateall':
+            setattr(gs,variable,pd.DataFrame(Dict[variable]))
+        elif variable =='errorP' or variable =='errorN':
+            nameError = extractattr(input.errorP)
+            DictError = Dict[variable] 
+            for var in nameError:
+                setattr(eval('gs.'+variable),var,DictError[var])
+        else:
+            setattr(gs,variable,Dict[variable])
+    return gs
     #Dict.pop('errorP')
     #Dict.pop('errorN')
-
-
 
     
 def  writeNewValueGUI(tableWidget,i,j,value,bounds=[ None, None]):
@@ -435,13 +454,8 @@ def Output(BC,xLink,xOutCrank,alpha,A,B,E,F,KBEW='-x'): #xlink,xoutcrank, alpha,
     ang=[beta,NYS_T,NYS_A,NYK_T,NYK_A]
     [beta,NYS_T,NYS_A,NYK_T,NYK_A] =[x*180/math.pi for x in ang]
     alpha = degree(alpha)
-# =============================================================================
-#==============================================================================
     return [alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
-    #return [beta,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
-    #return Equal1
-#==============================================================================
-# =============================================================================
+    #alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]
 
 
 def Output2(A,B,E,F,BC,xLink,xOutCrank):
@@ -539,6 +553,7 @@ def LBC2(ED,Distance2,Delta2):
 
 def write( sheet, r, c, value ):
 #==============================================================================
+
 #     header_fill = PatternFill( start_color='FFFFFF', end_color='FFFFFF', fill_type='solid' )
 #     header_font = Font( size=11, bold=True )
       header_align = Alignment( vertical='center', horizontal='center' )
@@ -631,4 +646,6 @@ def logSetting():
         fh.setFormatter(formatter)
         logger.addHandler(fh)
         return logger
+
+
     

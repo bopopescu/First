@@ -13,7 +13,7 @@ from openpyxl import worksheet
 import json
 import math
 #from openpyxl.utils import range_boundarie
-print('load self')
+
 def patch_worksheet():
     """This monkeypatches Worksheet.merge_cells to remove cell deletion bug
     https://bitbucket.org/openpyxl/openpyxl/issues/365/styling-merged-cells-isnt-working
@@ -112,8 +112,8 @@ class Inputs(error):
     errorN.Ap_Y   =  0.
     errorN.Ap_Z   =  0.
     Master =  'driver side'
-    w2          = 0.
-    w3          = 0.
+    w2Target          = 0.
+    w3Target          = 0.
 
     Distance   =  0.
     Delta = 0.
@@ -153,7 +153,7 @@ class Inputs(error):
     errorN.Fp_Z     = 0.
     KBEW = '+x'
     Ra_Rb = 0.
-    w2actual = 0.
+    w2opt = 0.
 
     Distance2   = 0.
     Delta2 =  0.
@@ -193,9 +193,51 @@ class Inputs(error):
     errorN.Fp_Z2  = 0.
     KBEW2 = '+x'
     Ra_Rb2 = 0.
+    w3opt = 0.
 
-
-class GS(Inputs):
+class Outputs():
+    
+    CordinateList =[]
+    CordinateDetailList = []
+    CD = 0.
+    ED = 0.
+    Ra_Rb = 0.
+    BC2 = 0.
+    CD2 = 0.
+    ED2 = 0.
+    Ra_Rb2 = 0.
+    listOpt1 = []
+    listOpt2 = []
+    startFrom = ''
+    w2Target = 0.
+    w3Target = 0.
+    parameterOpt = ''
+    w2opt = 0.
+    w3opt = 0.
+    M1NYS_T = 0.
+    M2NYS_T = 0.
+    S1NYS_T = 0.
+    S2NYS_T = 0.
+    outKPIall= []
+    outCordinateall = []
+    maxArray =[]
+    minArray=[]
+    maxArray2 = []
+    minArray2 = []
+    step = 0.
+    w2cal = 0
+    w3cal = 0
+    Park = 0 # abs park angle compared with 0 angle
+    UWL1 = 0 # abs park angle compared with 0 angle
+    UWL2 = 0 # abs park angle compared with 0 angle
+        # Tolerance
+    no = 0              # which crank to be calculated, 2 means master crank ,3 means slave crank(N2 column)
+    Parameter=[]        # list to store the paramter to be used for tolerance check(parameter column)
+    kpiList = []        # list to store the value of parameter(e.g BC) when reaching the largest deviation (Dimension column)
+    w2List=[]           # list to store the value of target function(e.g w2) when reaching the largest deviation(Function value column)
+    w2ErrorList = []    # list to store the deviation of target function
+   
+class GS(Inputs,Outputs):
     # Tolerance
     no = 0              # which crank to be calculated, 2 means master crank ,3 means slave crank(N2 column)
     Parameter=[]        # list to store the paramter to be used for tolerance check(parameter column)
@@ -208,6 +250,8 @@ class GS(Inputs):
     outCordinateall = []# dataframe to store the cordinate info after alphanumeric calculation
     # colsCordinate=['Cx','Cy','Cz','Dx','Dy','Dz']+['Cx2','Cy2','Cz2','Dx2','Dy2','Dz2']
 
+    CordinateList =[]         #list to store main cordinate list(30 degree), format to be seen in designtable1 template
+    CordinateDetailList = []  # list to store detail list ,format to be seen in designtable2 template
 
     w2cal = 0.
     w3cal = 0.
@@ -370,7 +414,7 @@ class GS(Inputs):
     w2optb = 0.
     w3optb = 0.
     line_ani = ''
-    listWrite = []
+    CordinateList = []
     template_path = os.getcwd()+'/template.xlsx'  # read
     excel_out = ''
     excel_design1 = ''
@@ -595,49 +639,9 @@ class GS(Inputs):
             self.Alfa = self.Alfa
             self.offsetAngle = self.offsetAngle
 
-class Outputs():
-      
-      CD = 0.
-      ED = 0.
-      Ra_Rb = 0.
-      w2actual = 0.
-      BC2 = 0.
-      CD2 = 0.
-      ED2 = 0.
-      Ra_Rb2 = 0.
-      listOpt1 = []
-      listOpt2 = []
-      startFrom = ''
-      w2Target = 0.
-      w3Target = 0.
-      parameterOpt = ''
-      w3actual = 0.
-      w2opt = 0.
-      w3opt = 0.
-      M1NYS_T = 0.
-      M2NYS_T = 0.
-      S1NYS_T = 0.
-      S2NYS_T = 0.
-      outKPIall= []
-      outCordinateall = []
-      maxArray =[]
-      minarray=[]
-      maxArray2 = []
-      minArray2 = []
-      step = 0.
-      w2cal = 0
-      w3cal = 0
-          # Tolerance
-      no = 0              # which crank to be calculated, 2 means master crank ,3 means slave crank(N2 column)
-      Parameter=[]        # list to store the paramter to be used for tolerance check(parameter column)
-      kpiList = []        # list to store the value of parameter(e.g BC) when reaching the largest deviation (Dimension column)
-      w2List=[]           # list to store the value of target function(e.g w2) when reaching the largest deviation(Function value column)
-      w2ErrorList = []    # list to store the deviation of target function
-     
-      
-      
+  
+
 
     
-
 
    
