@@ -345,7 +345,6 @@ class MainWindow_alphaNumeric(QMainWindow,ui.Ui_alphaNumeric):
         self.setupUi(self)
     @staticmethod
     def animate():
-
         number=gs.num
 
         Atemp=np.array([gs.A]*number).T
@@ -490,7 +489,6 @@ class MainWindow_alphaNumeric(QMainWindow,ui.Ui_alphaNumeric):
         plt.legend()
         plt.show()
         #return gs.line_ani  
-    staticmethod
     def plot(self):
         self.figs = Fig.ApplicationWindow(gs)
         self.figs.show( )
