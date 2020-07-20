@@ -196,7 +196,7 @@ def updateTolerance(Base,w2ErrorList,w2List,kpiList,i,t,Target,pos,neg,xm1,xm2):
 
 
 def OutputSymbol(A,B,E,F):
-    BC,xLink,xCrank,xm, xs = sp.symbols('BC xLink xCrank xm xs',real=True) # link, outcrank, master angle, slave angle
+    BC,xLink,xCrank,xm, xs = sp.symbols('BC xLink xCrank xm xs',real=True) # link, outcrank, main angle, subordinate angle
     Bn=B.copy()
     An=A.copy()
     En=E.copy()

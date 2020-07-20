@@ -85,7 +85,7 @@ def get_base_branch():
         return None
     version = sys.version_info
     if version.releaselevel == 'alpha':
-        base_branch = "master"
+        base_branch = "main"
     else:
         base_branch = "{0.major}.{0.minor}".format(version)
     this_branch = get_git_branch()

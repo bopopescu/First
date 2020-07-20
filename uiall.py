@@ -103,17 +103,17 @@ class MainWindow(QTabWidget, ui.Ui_MainWindow):
         gs.wb.save(gs.excel_out)
         print('save completed')
     def writeMainCordinate(self):
-        outM1=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm1,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Master -UWL,[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
-        outM2=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm2,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW) #Master-OWL [alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
-        outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave UWL
-        outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave OWL
+        outM1=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm1,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Main -UWL,[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
+        outM2=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm2,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW) #Main-OWL [alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
+        outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #subordinate UWL
+        outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #subordinate OWL
         
         if gs.MechanicType =='Center':
-            outM3=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm12,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Slave -UWL, 
-            outM4=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm22,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Slave -OWL, 
-            outS1=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm1,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2)  #Master -UWL,
-            outS2=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm2,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2)  #Master -OWL,
-            if gs.Master =='driver side':
+            outM3=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm12,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Subordinate -UWL, 
+            outM4=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm22,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Subordinate -OWL, 
+            outS1=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm1,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2)  #Main -UWL,
+            outS2=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm2,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2)  #Main -OWL,
+            if gs.Main =='driver side':
                 array =  [gs.A,gs.Ap,gs.B,gs.B2 , gs.F, gs.Fp, gs.E, gs.F2,gs.Fp2,gs.E2,outM1[6:12],outS1[6:12],
                 outM1[6:12],outS1[6:12],outM2[6:12],outS2[6:12],outM3[6:12],outS3[6:12],outM4[6:12],outS4[6:12]]
             else :
@@ -127,7 +127,7 @@ class MainWindow(QTabWidget, ui.Ui_MainWindow):
             gs.wb1.save(filename=gs.excel_design1)
         
         else:
-            if gs.Master =='driver side':
+            if gs.Main =='driver side':
                 array = [gs.A,gs.Ap,gs.F,gs.Fp,gs.F2,gs.Fp2 ,gs.B, gs.E, gs.B2, gs.E2,outM1[6:12],outS3[6:12],
                 outM1[6:12],outS3[6:12],outM2[6:12],outS4[6:12]]
             else:
@@ -151,7 +151,7 @@ class MainWindow(QTabWidget, ui.Ui_MainWindow):
                     outM=   Func.Output(gs.BC, gs.CD,  gs.ED, alpha, gs.A, gs.B , gs.E,  gs.F, KBEW=gs.KBEW)  #
                     alpha2 =outM[1]+gs.Delta2 
                     outS =  Func.Output(gs.BC2,gs.CD2, gs.ED2,alpha2,gs.A2,gs.B2, gs.E2, gs.F2, KBEW=gs.KBEW2)  #
-                if gs.Master =='driver side':                     
+                if gs.Main =='driver side':                     
                     gs.CordinateDetailList.extend(outM[6:12])
                     gs.CordinateDetailList.extend(outS[6:12])
                 else:
@@ -197,7 +197,7 @@ class MainWindow_Tolerance(QMainWindow,ui.Ui_Tolerance):
         self.setupUi(self)
         
     def Tolerance(self):
-        gs.noCrank = self.comboLink.currentText() #Master,Slave
+        gs.noCrank = self.comboLink.currentText() #Main,Subordinate
         obj = self.comboObj.currentText() #wipping angle,NYS_T
 
         listToleranceStrall = ["BC", "ED", 'Delta','CD',"F_X", "F_Y", "F_Z","Fp_X", "Fp_Y", "Fp_Z",'FE',"A_X", "A_Y", "A_Z","Ap_X", "Ap_Y", "Ap_Z",'Distance',
@@ -212,12 +212,12 @@ class MainWindow_Tolerance(QMainWindow,ui.Ui_Tolerance):
         else:
                 print('please configure objective function')
                 
-        if gs.noCrank=='Master':
+        if gs.noCrank=='Main':
                 listToleranceStr = listToleranceStrall[0:numTolerance]
                 Base = [eval('gs.'+st) for st in listToleranceStr]
                 Target = Func.Tolerance(Base,gs.xm1,gs.xm2)[t]
                 gs.no = 2
-        elif gs.noCrank == 'Slave':
+        elif gs.noCrank == 'Subordinate':
                 listToleranceStr = listToleranceStrall[numTolerance:]
                 Base = [eval('gs.'+st) for st in listToleranceStr]
                 Target = Func.Tolerance(Base,gs.xm12,gs.xm22)[t]
@@ -233,7 +233,7 @@ class MainWindow_Tolerance(QMainWindow,ui.Ui_Tolerance):
         
         
         ToleranceValue = Base.copy()  # to be changed
-        if gs.noCrank=='Master': #master
+        if gs.noCrank=='Main': #main
                 for i in range(numTolerance):
                         Func.updateTolerance(ToleranceValue, gs.w2ErrorList, gs.w2List, gs.kpiList, i,  t,Target, errorPositive[i],
                                 errorNegative[i], gs.xm1, gs.xm2)
@@ -243,7 +243,7 @@ class MainWindow_Tolerance(QMainWindow,ui.Ui_Tolerance):
                         arrayi[i] = Base[i]
                         Func.updateTolerance(arrayi, gs.w2ErrorList, gs.w2List, gs.kpiList, i, t,Target, errorPositive[i],
                                 errorNegative[i], gs.xm1, gs.xm2)
-        elif gs.noCrank == 'Slave':
+        elif gs.noCrank == 'Subordinate':
                 for i in range(numTolerance):
                         Func.updateTolerance(ToleranceValue, gs.w2ErrorList, gs.w2List, gs.kpiList, i, t,Target,
                                              errorPositive[i],
@@ -498,7 +498,7 @@ class MainWindow_alphaNumeric(QMainWindow,ui.Ui_alphaNumeric):
         n = len(gs.outKPIall.columns) 
         
         assert (n%2==1)
-        n1 = int((n+1)/2) # master part
+        n1 = int((n+1)/2) # main part
         for i in range(1,n1):
             listT = Func.getMax(gs.outKPIall,i)
             gs.maxArray.append(listT[0])
@@ -676,8 +676,8 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
         gs.xm12 = gs.xm12b
         gs.xm22 = gs.xm22b
         gs.Ra_Rb2=float(gs.BC2/gs.CD2)
-        outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave UWL
-        outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #slave OWL
+        outS3=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm12,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #subordinate UWL
+        outS4=Func.Output(gs.BC2,gs.CD2,gs.ED2,gs.xm22,gs.A2,gs.B2,gs.E2,gs.F2,KBEW=gs.KBEW2) #subordinate OWL
         #[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],D[0][0],D[0][1],D[0][2]]
         gs.xs12 = outS3[1]
         gs.xs22 = outS4[1]
@@ -694,7 +694,7 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
             gs.Alfa = round(gs.Alfab,1)
             gs.offsetAngle = round(gs.offsetAngleb,1)
             [equal1,equal2,NYK_T,NYS_T,Dbx,Dby,Dbz] = Func.OutputSymbol  (gs.A,gs.B,gs.E,gs.F)
-            Equal1inline = repr(equal1[0]).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC') # link length equation for master link
+            Equal1inline = repr(equal1[0]).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC') # link length equation for main link
             Equal2inline = repr(equal2).replace('xCrank','gs.ED').replace('xLink','gs.CD').replace('xm','angle[0]').replace('xs','angle[1]').replace('sin','sp.sin').replace('cos','sp.cos').replace('sqrt','sp.sqrt').replace('BC','gs.BC')
             EqualInline = [Equal1inline,Equal2inline]
             def Finline(angle):
@@ -714,8 +714,8 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
             gs.offsetAngle = 0
             gs.Alfa = 360
         gs.Ra_Rb = float(gs.BC/gs.CD)
-        outM1=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm1,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Master -UWL,[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
-        outM2=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm2,gs.A,gs.B,gs.E,gs.F,KBEW= gs.KBEW) #Master-OWL [alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
+        outM1=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm1,gs.A,gs.B,gs.E,gs.F,KBEW=gs.KBEW)  #Main -UWL,[alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
+        outM2=Func.Output(gs.BC,gs.CD,gs.ED,gs.xm2,gs.A,gs.B,gs.E,gs.F,KBEW= gs.KBEW) #Main-OWL [alpha,beta,NYS_T,NYS_A,NYK_T,NYK_A,C[0][0],C[0][1],C[0][2],Db[0][0],Db[0][1],Db[0][2]]
         gs.xs1 = outM1[1]
         gs.xs2 = outM2[1]
         # cxs1 = math.cos(Func.rad(gs.xs1))
@@ -768,8 +768,8 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
 
         # generating equation
         #optimize
-        Equal1 = repr(equal1[0]).replace('xCrank','model.outCrank').replace('xLink','model.link') # link length equation for master link
-        Equal2 = repr(equal2).replace('xCrank','model.outCrank').replace('sqrt','pe.sqrt') # bc parrel bd equation for master link
+        Equal1 = repr(equal1[0]).replace('xCrank','model.outCrank').replace('xLink','model.link') # link length equation for main link
+        Equal2 = repr(equal2).replace('xCrank','model.outCrank').replace('sqrt','pe.sqrt') # bc parrel bd equation for main link
                                                                             
         F_M11=Equal1.replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1') # 11 means equation 1 for start position
         F_M12=Equal1.replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2').replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2')
@@ -782,8 +782,8 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
         F_M1NYS_T= repr(NYS_T).replace('sin(xs)','model.sxs1').replace('cos(xs)','model.cxs1').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm1').replace('cos(xm)','model.cxm1').replace('sqrt','pe.sqrt')
         F_M2NYS_T= repr(NYS_T).replace('sin(xs)','model.sxs2').replace('cos(xs)','model.cxs2').replace('xCrank','model.outCrank').replace('acos','pe.acos').replace('sin(xm)','model.sxm2').replace('cos(xm)','model.cxm2').replace('sqrt','pe.sqrt')
         
-        if gs.MechanicType =='Center':# only one model , master and slave is optimizaed together
-            Equal12 = repr(equal12[0]).replace('xCrank','model.outCrank2').replace('xLink','model.link2').replace('BC','model.bc2') #link length equation for slave link
+        if gs.MechanicType =='Center':# only one model , main and subordinate is optimizaed together
+            Equal12 = repr(equal12[0]).replace('xCrank','model.outCrank2').replace('xLink','model.link2').replace('BC','model.bc2') #link length equation for subordinate link
             Equal22 = repr(equal22).replace('xCrank', 'model.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model.bc2') #model.bc2 TBD for center
             F_S11=Equal12.replace('sin(xs)','model.sxs12').replace('cos(xs)','model.cxs12').replace('sin(xm)','model.sxm12').replace('cos(xm)','model.cxm12')
             F_S12=Equal12.replace('sin(xs)','model.sxs22').replace('cos(xs)','model.cxs22').replace('sin(xm)','model.sxm22').replace('cos(xm)','model.cxm22') # two position start and OWL
@@ -793,8 +793,8 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
             F_S2NYK_T= repr(NYK_T2).replace('sin(xm)','model.sxm22').replace('cos(xm)','model.cxm22').replace('sin(xs)','model.sxs22').replace('cos(xs)','model.cxs22').replace('acos','pe.acos').replace('xCrank','model.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model.bc2')
             F_S21 = Equal22.replace('sin(xs)', 'model.sxs12').replace('cos(xs)', 'model.cxs12').replace('sin(xm)','model.sxm12').replace('cos(xm)', 'model.cxm12')
             F_S22 = Equal22.replace('sin(xs)', 'model.sxs22').replace('cos(xs)', 'model.cxs22').replace('sin(xm)', 'model.sxm22').replace('cos(xm)', 'model.cxm22')
-        else:# two model, master and slave is optimized seperately
-            Equal12 = repr(equal12[0]).replace('xCrank','model2.outCrank2').replace('xLink','model2.link2').replace('BC','model2.bc2') #link length equation for slave link
+        else:# two model, main and subordinate is optimized seperately
+            Equal12 = repr(equal12[0]).replace('xCrank','model2.outCrank2').replace('xLink','model2.link2').replace('BC','model2.bc2') #link length equation for subordinate link
             Equal22 = repr(equal22).replace('xCrank', 'model2.outCrank2').replace('sqrt','pe.sqrt').replace('BC','model2.bc2') #model.bc2 TBD for center
             F_S11 = Equal12.replace('sin(xs)','model2.sxs12').replace('cos(xs)','model2.cxs12').replace('sin(xm)','model2.sxm12').replace('cos(xm)','model2.cxm12')
             F_S12 = Equal12.replace('sin(xs)','model2.sxs22').replace('cos(xs)','model2.cxs22').replace('sin(xm)','model2.sxm22').replace('cos(xm)','model2.cxm22') # two position start and OWL
@@ -935,7 +935,7 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
             result_obj1 = opt.solve(model)
             str1 = "The solver returned a status of: " + str(result_obj1.solver.status)
             str2 = "The solver terminated when: " + str(result_obj1.solver.termination_condition)
-            print('------------------------------master link info------------------------')
+            print('------------------------------main link info------------------------')
             print(str1)
             print(str2)
             if str(result_obj1.solver.status).strip() !='ok':
@@ -989,8 +989,8 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
             self.rounding()
             self.rounding2()
 
-        else: # Master-Slave
-                    #--- master link
+        else: # Main-Subordinate
+                    #--- main link
             model.obj=pe.Objective(expr=(model.cxs2*model.cxs1+model.sxs2*model.sxs1-math.cos(gs.w2))**2) # minmize wipping angle error
             model.Con.add(expr=(model.cxs2 * model.cxs1 + model.sxs2 * model.sxs1 - math.cos(
                     gs.w2)) ** 2 <= 0.001)  # the lowest wipping angle requirement
@@ -1003,7 +1003,7 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
             result_obj1 = opt.solve(model) 
             str1="The solver returned a status of: " + str(result_obj1.solver.status)
             str2= "The solver terminated when: " + str(result_obj1.solver.termination_condition)
-            print('------------------------------master link info------------------------')
+            print('------------------------------main link info------------------------')
             print(str1)
             print(str2)
             if str(result_obj1.solver.status)!='ok':
@@ -1061,8 +1061,8 @@ class MainWindow_Opt(QMainWindow,ui.Ui_Optimization):
         
             #=============================================================================
 
-            #slave  link
-            print('------------------slave crank info---------------')
+            #subordinate  link
+            print('------------------subordinate crank info---------------')
             model2 = pe.ConcreteModel()
             model2.link2 = pe.Var(initialize = gs.CD2,bounds=(4.5*gs.BC,10*gs.BC) ) # length of link 
             model2.outCrank2 = pe.Var(initialize =gs.ED2,bounds = (gs.ED2,gs.ED2)) # length of output crank
@@ -1181,15 +1181,15 @@ class MainWindow_Input(QMainWindow,ui.Ui_Input):
     def UpdateOptValue(self):
         print('update opt value')
         GeneralBounds = [0,1000]
-        Func.writeNewValueGUI(self.tableMasterCranklInfo,4,0,gs.CD,bounds = GeneralBounds)
-        Func.writeNewValueGUI(self.tableMasterCranklInfo,5,0,gs.ED,bounds = GeneralBounds)
-        Func.writeNewValueGUI(self.tableMasterCrankInfo2,0,1,'%.4f'%gs.Ra_Rb,bounds = [0,1/4.5])
-        Func.writeNewValueGUI(self.tableMasterCrankInfo2,0,2,'%.4f'%gs.w2opt,bounds=[gs.w2Target-0.1,gs.w2Target+0.1])
-        Func.writeNewValueGUI(self.tableSlaveCrankInfo2,0,1,'%.4f'%gs.Ra_Rb2,bounds=[0,1/4.5])
-        Func.writeNewValueGUI(self.tableSlaveCrankInfo2,0,2,'%.4f'%gs.w3opt,bounds =[gs.w3Target-0.1, gs.w3Target+0.1])
-        Func.writeNewValueGUI(self.tableMasterCranklInfo,1,0,'%.4f'%gs.Delta,bounds = [-90,90])
-        Func.writeNewValueGUI(self.tableSlaveCrankInfo,1,0,'%.4f'%gs.Delta2,bounds = [-90,90])
-        #self.tableMasterCranklInfo.setItem(4, 0 ,Qitem(str(gs.CD)))
+        Func.writeNewValueGUI(self.tableMainCranklInfo,4,0,gs.CD,bounds = GeneralBounds)
+        Func.writeNewValueGUI(self.tableMainCranklInfo,5,0,gs.ED,bounds = GeneralBounds)
+        Func.writeNewValueGUI(self.tableMainCrankInfo2,0,1,'%.4f'%gs.Ra_Rb,bounds = [0,1/4.5])
+        Func.writeNewValueGUI(self.tableMainCrankInfo2,0,2,'%.4f'%gs.w2opt,bounds=[gs.w2Target-0.1,gs.w2Target+0.1])
+        Func.writeNewValueGUI(self.tableSubordinateCrankInfo2,0,1,'%.4f'%gs.Ra_Rb2,bounds=[0,1/4.5])
+        Func.writeNewValueGUI(self.tableSubordinateCrankInfo2,0,2,'%.4f'%gs.w3opt,bounds =[gs.w3Target-0.1, gs.w3Target+0.1])
+        Func.writeNewValueGUI(self.tableMainCranklInfo,1,0,'%.4f'%gs.Delta,bounds = [-90,90])
+        Func.writeNewValueGUI(self.tableSubordinateCrankInfo,1,0,'%.4f'%gs.Delta2,bounds = [-90,90])
+        #self.tableMainCranklInfo.setItem(4, 0 ,Qitem(str(gs.CD)))
 
         if gs.DriveType == 'Reversing':
             Func.writeNewValueGUI(self.tableMotorInfo,0,0,'%.4f'%gs.Alfa,bounds=[140,170])
@@ -1198,12 +1198,12 @@ class MainWindow_Input(QMainWindow,ui.Ui_Input):
 
 
         if gs.MechanicType =='Center':
-            Func.writeNewValueGUI(self.tableSlaveCrankInfo,4,0,gs.CD2,bounds=GeneralBounds)
-            Func.writeNewValueGUI(self.tableSlaveCrankInfo,5,0,gs.ED2,bounds = GeneralBounds)
+            Func.writeNewValueGUI(self.tableSubordinateCrankInfo,4,0,gs.CD2,bounds=GeneralBounds)
+            Func.writeNewValueGUI(self.tableSubordinateCrankInfo,5,0,gs.ED2,bounds = GeneralBounds)
 
         else :
-            Func.writeNewValueGUI(self.tableSlaveCrankInfo,4,0,gs.CD2,bounds = GeneralBounds)
-            Func.writeNewValueGUI(self.tableSlaveCrankInfo,3,0,gs.BC2,bounds = GeneralBounds)
+            Func.writeNewValueGUI(self.tableSubordinateCrankInfo,4,0,gs.CD2,bounds = GeneralBounds)
+            Func.writeNewValueGUI(self.tableSubordinateCrankInfo,3,0,gs.BC2,bounds = GeneralBounds)
             
     def updateNewsheet(self):
         print('create new output sheet')
@@ -1286,87 +1286,87 @@ class MainWindow_Input(QMainWindow,ui.Ui_Input):
         self.tableMotorInfo.setItem(6,2,Qitem(Func.read(gs.sheet1,32,13)))
         self.tableMotorInfo.setItem(7,2,Qitem(Func.read(gs.sheet1,32,19)))
         
-        self.tableMasterCranklInfo.setItem(0,0,Qitem(Func.read(gs.sheet1,44,2)))
-        self.tableMasterCranklInfo.setItem(1,0,Qitem(Func.read(gs.sheet1,47,2)))
-        self.tableMasterCranklInfo.setItem(2,0,Qitem(Func.read(gs.sheet1,44,15)))
-        self.tableMasterCranklInfo.setItem(3,0,Qitem(Func.read(gs.sheet1,44,9)))
-        self.tableMasterCranklInfo.setItem(4,0,Qitem(Func.read(gs.sheet1,47,9)))
-        self.tableMasterCranklInfo.setItem(5,0,Qitem(Func.read(gs.sheet1,47,15)))
-        self.tableMasterCranklInfo.setItem(6,0,Qitem(Func.read(gs.sheet1,38,2)))
-        self.tableMasterCranklInfo.setItem(7,0,Qitem(Func.read(gs.sheet1,38,9)))
-        self.tableMasterCranklInfo.setItem(8,0,Qitem(Func.read(gs.sheet1,38,15)))
-        self.tableMasterCranklInfo.setItem(9,0,Qitem(Func.read(gs.sheet1,41,2)))
-        self.tableMasterCranklInfo.setItem(10,0,Qitem(Func.read(gs.sheet1,41,9)))
-        self.tableMasterCranklInfo.setItem(11,0,Qitem(Func.read(gs.sheet1,41,15)))
-        self.tableMasterCranklInfo.setItem(0,1,Qitem(Func.read(gs.sheet1,43,6)))
-        self.tableMasterCranklInfo.setItem(1,1,Qitem(Func.read(gs.sheet1,46,6)))
-        self.tableMasterCranklInfo.setItem(2,1,Qitem(Func.read(gs.sheet1,43,19)))
-        self.tableMasterCranklInfo.setItem(3,1,Qitem(Func.read(gs.sheet1,43,13)))
-        self.tableMasterCranklInfo.setItem(4,1,Qitem(Func.read(gs.sheet1,46,13)))
-        self.tableMasterCranklInfo.setItem(5,1,Qitem(Func.read(gs.sheet1,46,19)))
-        self.tableMasterCranklInfo.setItem(6,1,Qitem(Func.read(gs.sheet1,37,6)))
-        self.tableMasterCranklInfo.setItem(7,1,Qitem(Func.read(gs.sheet1,37,13)))
-        self.tableMasterCranklInfo.setItem(8,1,Qitem(Func.read(gs.sheet1,37,19)))
-        self.tableMasterCranklInfo.setItem(9,1,Qitem(Func.read(gs.sheet1,40,6)))
-        self.tableMasterCranklInfo.setItem(10,1,Qitem(Func.read(gs.sheet1,40,13)))
-        self.tableMasterCranklInfo.setItem(11,1,Qitem(Func.read(gs.sheet1,40,19)))
-        self.tableMasterCranklInfo.setItem(0,2,Qitem(Func.read(gs.sheet1, 44,6)))
-        self.tableMasterCranklInfo.setItem(1,2,Qitem(Func.read(gs.sheet1, 47,6)))
-        self.tableMasterCranklInfo.setItem(2,2,Qitem(Func.read(gs.sheet1,44,19)))
-        self.tableMasterCranklInfo.setItem(3,2,Qitem(Func.read(gs.sheet1,44,13)))
-        self.tableMasterCranklInfo.setItem(4,2,Qitem(Func.read(gs.sheet1,47,13)))
-        self.tableMasterCranklInfo.setItem(5,2,Qitem(Func.read(gs.sheet1,47,19)))
-        self.tableMasterCranklInfo.setItem(6,2,Qitem(Func.read(gs.sheet1,38,6)))
-        self.tableMasterCranklInfo.setItem(7,2,Qitem(Func.read(gs.sheet1,38,13)))
-        self.tableMasterCranklInfo.setItem(8,2,Qitem(Func.read(gs.sheet1,38,19)))
-        self.tableMasterCranklInfo.setItem(9,2,Qitem(Func.read(gs.sheet1,41,6)))
-        self.tableMasterCranklInfo.setItem(10,2,Qitem(Func.read(gs.sheet1,41,13)))
-        self.tableMasterCranklInfo.setItem(11,2,Qitem(Func.read(gs.sheet1,41,19)))
+        self.tableMainCranklInfo.setItem(0,0,Qitem(Func.read(gs.sheet1,44,2)))
+        self.tableMainCranklInfo.setItem(1,0,Qitem(Func.read(gs.sheet1,47,2)))
+        self.tableMainCranklInfo.setItem(2,0,Qitem(Func.read(gs.sheet1,44,15)))
+        self.tableMainCranklInfo.setItem(3,0,Qitem(Func.read(gs.sheet1,44,9)))
+        self.tableMainCranklInfo.setItem(4,0,Qitem(Func.read(gs.sheet1,47,9)))
+        self.tableMainCranklInfo.setItem(5,0,Qitem(Func.read(gs.sheet1,47,15)))
+        self.tableMainCranklInfo.setItem(6,0,Qitem(Func.read(gs.sheet1,38,2)))
+        self.tableMainCranklInfo.setItem(7,0,Qitem(Func.read(gs.sheet1,38,9)))
+        self.tableMainCranklInfo.setItem(8,0,Qitem(Func.read(gs.sheet1,38,15)))
+        self.tableMainCranklInfo.setItem(9,0,Qitem(Func.read(gs.sheet1,41,2)))
+        self.tableMainCranklInfo.setItem(10,0,Qitem(Func.read(gs.sheet1,41,9)))
+        self.tableMainCranklInfo.setItem(11,0,Qitem(Func.read(gs.sheet1,41,15)))
+        self.tableMainCranklInfo.setItem(0,1,Qitem(Func.read(gs.sheet1,43,6)))
+        self.tableMainCranklInfo.setItem(1,1,Qitem(Func.read(gs.sheet1,46,6)))
+        self.tableMainCranklInfo.setItem(2,1,Qitem(Func.read(gs.sheet1,43,19)))
+        self.tableMainCranklInfo.setItem(3,1,Qitem(Func.read(gs.sheet1,43,13)))
+        self.tableMainCranklInfo.setItem(4,1,Qitem(Func.read(gs.sheet1,46,13)))
+        self.tableMainCranklInfo.setItem(5,1,Qitem(Func.read(gs.sheet1,46,19)))
+        self.tableMainCranklInfo.setItem(6,1,Qitem(Func.read(gs.sheet1,37,6)))
+        self.tableMainCranklInfo.setItem(7,1,Qitem(Func.read(gs.sheet1,37,13)))
+        self.tableMainCranklInfo.setItem(8,1,Qitem(Func.read(gs.sheet1,37,19)))
+        self.tableMainCranklInfo.setItem(9,1,Qitem(Func.read(gs.sheet1,40,6)))
+        self.tableMainCranklInfo.setItem(10,1,Qitem(Func.read(gs.sheet1,40,13)))
+        self.tableMainCranklInfo.setItem(11,1,Qitem(Func.read(gs.sheet1,40,19)))
+        self.tableMainCranklInfo.setItem(0,2,Qitem(Func.read(gs.sheet1, 44,6)))
+        self.tableMainCranklInfo.setItem(1,2,Qitem(Func.read(gs.sheet1, 47,6)))
+        self.tableMainCranklInfo.setItem(2,2,Qitem(Func.read(gs.sheet1,44,19)))
+        self.tableMainCranklInfo.setItem(3,2,Qitem(Func.read(gs.sheet1,44,13)))
+        self.tableMainCranklInfo.setItem(4,2,Qitem(Func.read(gs.sheet1,47,13)))
+        self.tableMainCranklInfo.setItem(5,2,Qitem(Func.read(gs.sheet1,47,19)))
+        self.tableMainCranklInfo.setItem(6,2,Qitem(Func.read(gs.sheet1,38,6)))
+        self.tableMainCranklInfo.setItem(7,2,Qitem(Func.read(gs.sheet1,38,13)))
+        self.tableMainCranklInfo.setItem(8,2,Qitem(Func.read(gs.sheet1,38,19)))
+        self.tableMainCranklInfo.setItem(9,2,Qitem(Func.read(gs.sheet1,41,6)))
+        self.tableMainCranklInfo.setItem(10,2,Qitem(Func.read(gs.sheet1,41,13)))
+        self.tableMainCranklInfo.setItem(11,2,Qitem(Func.read(gs.sheet1,41,19)))
 
-        self.tableMasterCrankInfo2.setItem(0,0,Qitem(Func.read(gs.sheet1,49,4)))
-        self.tableMasterCrankInfo2.setItem(0,1,Qitem(Func.read(gs.sheet1,49,9)))
-        self.tableMasterCrankInfo2.setItem(0,2,Qitem(Func.read(gs.sheet1,49,17)))
+        self.tableMainCrankInfo2.setItem(0,0,Qitem(Func.read(gs.sheet1,49,4)))
+        self.tableMainCrankInfo2.setItem(0,1,Qitem(Func.read(gs.sheet1,49,9)))
+        self.tableMainCrankInfo2.setItem(0,2,Qitem(Func.read(gs.sheet1,49,17)))
 
-        self.tableSlaveCrankInfo.setItem(0,0,Qitem(Func.read(gs.sheet1,61,2)))
-        self.tableSlaveCrankInfo.setItem(1,0,Qitem(Func.read(gs.sheet1,64,2)))
-        self.tableSlaveCrankInfo.setItem(2,0,Qitem(Func.read(gs.sheet1,61,15)))
-        self.tableSlaveCrankInfo.setItem(3,0,Qitem(Func.read(gs.sheet1,61,9)))
-        self.tableSlaveCrankInfo.setItem(4,0,Qitem(Func.read(gs.sheet1,64,9)))
-        self.tableSlaveCrankInfo.setItem(5,0,Qitem(Func.read(gs.sheet1,64,15)))
-        self.tableSlaveCrankInfo.setItem(6,0,Qitem(Func.read(gs.sheet1,55,2)))
-        self.tableSlaveCrankInfo.setItem(7,0,Qitem(Func.read(gs.sheet1,55,9)))
-        self.tableSlaveCrankInfo.setItem(8,0,Qitem(Func.read(gs.sheet1,55,15)))
-        self.tableSlaveCrankInfo.setItem(9,0,Qitem(Func.read(gs.sheet1,58,2)))
-        self.tableSlaveCrankInfo.setItem(10,0,Qitem(Func.read(gs.sheet1,58,9)))
-        self.tableSlaveCrankInfo.setItem(11,0,Qitem(Func.read(gs.sheet1,58,15)))
-        self.tableSlaveCrankInfo.setItem(0,1,Qitem(Func.read(gs.sheet1,60,6)))
-        self.tableSlaveCrankInfo.setItem(1,1,Qitem(Func.read(gs.sheet1,63,6)))
-        self.tableSlaveCrankInfo.setItem(2,1,Qitem(Func.read(gs.sheet1,60,19)))
-        self.tableSlaveCrankInfo.setItem(3,1,Qitem(Func.read(gs.sheet1,60,13)))
-        self.tableSlaveCrankInfo.setItem(4,1,Qitem(Func.read(gs.sheet1,63,13)))
-        self.tableSlaveCrankInfo.setItem(5,1,Qitem(Func.read(gs.sheet1,63,19)))
-        self.tableSlaveCrankInfo.setItem(6,1,Qitem(Func.read(gs.sheet1,54,6)))
-        self.tableSlaveCrankInfo.setItem(7,1,Qitem(Func.read(gs.sheet1,54,13)))
-        self.tableSlaveCrankInfo.setItem(8,1,Qitem(Func.read(gs.sheet1,54,19)))
-        self.tableSlaveCrankInfo.setItem(9,1,Qitem(Func.read(gs.sheet1,57,6)))
-        self.tableSlaveCrankInfo.setItem(10,1,Qitem(Func.read(gs.sheet1,57,13)))
-        self.tableSlaveCrankInfo.setItem(11,1,Qitem(Func.read(gs.sheet1,57,19)))
-        self.tableSlaveCrankInfo.setItem(0,2,Qitem(Func.read(gs.sheet1,61,6)))
-        self.tableSlaveCrankInfo.setItem(1,2,Qitem(Func.read(gs.sheet1,64,6)))
-        self.tableSlaveCrankInfo.setItem(2,2,Qitem(Func.read(gs.sheet1,61,19)))
-        self.tableSlaveCrankInfo.setItem(3,2,Qitem(Func.read(gs.sheet1,61,13)))
-        self.tableSlaveCrankInfo.setItem(4,2,Qitem(Func.read(gs.sheet1,64,13)))
-        self.tableSlaveCrankInfo.setItem(5,2,Qitem(Func.read(gs.sheet1,64,19)))
-        self.tableSlaveCrankInfo.setItem(6,2,Qitem(Func.read(gs.sheet1,55,6)))
-        self.tableSlaveCrankInfo.setItem(7,2,Qitem(Func.read(gs.sheet1,55,13)))
-        self.tableSlaveCrankInfo.setItem(8,2,Qitem(Func.read(gs.sheet1,55,19)))
-        self.tableSlaveCrankInfo.setItem(9,2,Qitem(Func.read(gs.sheet1,58,6)))
-        self.tableSlaveCrankInfo.setItem(10,2,Qitem(Func.read(gs.sheet1,58,13)))
-        self.tableSlaveCrankInfo.setItem(11,2,Qitem(Func.read(gs.sheet1,58,19)))
+        self.tableSubordinateCrankInfo.setItem(0,0,Qitem(Func.read(gs.sheet1,61,2)))
+        self.tableSubordinateCrankInfo.setItem(1,0,Qitem(Func.read(gs.sheet1,64,2)))
+        self.tableSubordinateCrankInfo.setItem(2,0,Qitem(Func.read(gs.sheet1,61,15)))
+        self.tableSubordinateCrankInfo.setItem(3,0,Qitem(Func.read(gs.sheet1,61,9)))
+        self.tableSubordinateCrankInfo.setItem(4,0,Qitem(Func.read(gs.sheet1,64,9)))
+        self.tableSubordinateCrankInfo.setItem(5,0,Qitem(Func.read(gs.sheet1,64,15)))
+        self.tableSubordinateCrankInfo.setItem(6,0,Qitem(Func.read(gs.sheet1,55,2)))
+        self.tableSubordinateCrankInfo.setItem(7,0,Qitem(Func.read(gs.sheet1,55,9)))
+        self.tableSubordinateCrankInfo.setItem(8,0,Qitem(Func.read(gs.sheet1,55,15)))
+        self.tableSubordinateCrankInfo.setItem(9,0,Qitem(Func.read(gs.sheet1,58,2)))
+        self.tableSubordinateCrankInfo.setItem(10,0,Qitem(Func.read(gs.sheet1,58,9)))
+        self.tableSubordinateCrankInfo.setItem(11,0,Qitem(Func.read(gs.sheet1,58,15)))
+        self.tableSubordinateCrankInfo.setItem(0,1,Qitem(Func.read(gs.sheet1,60,6)))
+        self.tableSubordinateCrankInfo.setItem(1,1,Qitem(Func.read(gs.sheet1,63,6)))
+        self.tableSubordinateCrankInfo.setItem(2,1,Qitem(Func.read(gs.sheet1,60,19)))
+        self.tableSubordinateCrankInfo.setItem(3,1,Qitem(Func.read(gs.sheet1,60,13)))
+        self.tableSubordinateCrankInfo.setItem(4,1,Qitem(Func.read(gs.sheet1,63,13)))
+        self.tableSubordinateCrankInfo.setItem(5,1,Qitem(Func.read(gs.sheet1,63,19)))
+        self.tableSubordinateCrankInfo.setItem(6,1,Qitem(Func.read(gs.sheet1,54,6)))
+        self.tableSubordinateCrankInfo.setItem(7,1,Qitem(Func.read(gs.sheet1,54,13)))
+        self.tableSubordinateCrankInfo.setItem(8,1,Qitem(Func.read(gs.sheet1,54,19)))
+        self.tableSubordinateCrankInfo.setItem(9,1,Qitem(Func.read(gs.sheet1,57,6)))
+        self.tableSubordinateCrankInfo.setItem(10,1,Qitem(Func.read(gs.sheet1,57,13)))
+        self.tableSubordinateCrankInfo.setItem(11,1,Qitem(Func.read(gs.sheet1,57,19)))
+        self.tableSubordinateCrankInfo.setItem(0,2,Qitem(Func.read(gs.sheet1,61,6)))
+        self.tableSubordinateCrankInfo.setItem(1,2,Qitem(Func.read(gs.sheet1,64,6)))
+        self.tableSubordinateCrankInfo.setItem(2,2,Qitem(Func.read(gs.sheet1,61,19)))
+        self.tableSubordinateCrankInfo.setItem(3,2,Qitem(Func.read(gs.sheet1,61,13)))
+        self.tableSubordinateCrankInfo.setItem(4,2,Qitem(Func.read(gs.sheet1,64,13)))
+        self.tableSubordinateCrankInfo.setItem(5,2,Qitem(Func.read(gs.sheet1,64,19)))
+        self.tableSubordinateCrankInfo.setItem(6,2,Qitem(Func.read(gs.sheet1,55,6)))
+        self.tableSubordinateCrankInfo.setItem(7,2,Qitem(Func.read(gs.sheet1,55,13)))
+        self.tableSubordinateCrankInfo.setItem(8,2,Qitem(Func.read(gs.sheet1,55,19)))
+        self.tableSubordinateCrankInfo.setItem(9,2,Qitem(Func.read(gs.sheet1,58,6)))
+        self.tableSubordinateCrankInfo.setItem(10,2,Qitem(Func.read(gs.sheet1,58,13)))
+        self.tableSubordinateCrankInfo.setItem(11,2,Qitem(Func.read(gs.sheet1,58,19)))
 
-        self.tableSlaveCrankInfo2.setItem(0,0,Qitem(Func.read(gs.sheet1,66,4)))
-        self.tableSlaveCrankInfo2.setItem(0,1,Qitem(Func.read(gs.sheet1,66,9)))
-        self.tableSlaveCrankInfo2.setItem(0,2,Qitem(Func.read(gs.sheet1,66,17)))
+        self.tableSubordinateCrankInfo2.setItem(0,0,Qitem(Func.read(gs.sheet1,66,4)))
+        self.tableSubordinateCrankInfo2.setItem(0,1,Qitem(Func.read(gs.sheet1,66,9)))
+        self.tableSubordinateCrankInfo2.setItem(0,2,Qitem(Func.read(gs.sheet1,66,17)))
         gs.DriveType = (Func.read(gs.sheet1,12,5))
         gs.MechanicType =  (Func.read(gs.sheet1,12,15))
         gs.Alfa = float(Func.read(gs.sheet1,22,2))
@@ -1435,87 +1435,87 @@ class MainWindow_Input(QMainWindow,ui.Ui_Input):
         gs.errorN.Ap_Y   = float(self.tableMotorInfo.item(6,2).text())
         gs.errorN.Ap_Z   = float(self.tableMotorInfo.item(7,2).text())
 
-        gs.Master =  QtWidgets.QComboBox.currentText(self.comboNo2)
+        gs.Main =  QtWidgets.QComboBox.currentText(self.comboNo2)
         gs.w2          = float(self.TextW2.text())
         gs.w3          = float(self.TextW3.text())
         
-        gs.Distance   = float(self.tableMasterCranklInfo.item(0,0).text())
-        gs.Delta = float(self.tableMasterCranklInfo.item(1,0).text())
-        gs.FE   = float(self.tableMasterCranklInfo.item(2,0).text())
-        gs.BC   = float(self.tableMasterCranklInfo.item(3,0).text())
-        gs.CD   = float(self.tableMasterCranklInfo.item(4,0).text())
-        gs.ED   = float(self.tableMasterCranklInfo.item(5,0).text())
-        gs.F_X   = float(self.tableMasterCranklInfo.item(6,0).text())
-        gs.F_Y   = float(self.tableMasterCranklInfo.item(7,0).text())
-        gs.F_Z   = float(self.tableMasterCranklInfo.item(8,0).text())
-        gs.Fp_X   = float(self.tableMasterCranklInfo.item(9,0).text())
-        gs.Fp_Y   = float(self.tableMasterCranklInfo.item(10,0).text())
-        gs.Fp_Z   = float(self.tableMasterCranklInfo.item(11,0).text())
-        gs.errorP.Distance   = float(self.tableMasterCranklInfo.item(0,1).text())
-        gs.errorP.Delta = float(self.tableMasterCranklInfo.item(1,1).text())
-        gs.errorP.FE   = float(self.tableMasterCranklInfo.item(2,1).text())
-        gs.errorP.BC   = float(self.tableMasterCranklInfo.item(3,1).text())
-        gs.errorP.CD   = float(self.tableMasterCranklInfo.item(4,1).text())
-        gs.errorP.ED   = float(self.tableMasterCranklInfo.item(5,1).text())
-        gs.errorP.F_X   = float(self.tableMasterCranklInfo.item(6,1).text())
-        gs.errorP.F_Y   = float(self.tableMasterCranklInfo.item(7,1).text())
-        gs.errorP.F_Z   = float(self.tableMasterCranklInfo.item(8,1).text())
-        gs.errorP.Fp_X   = float(self.tableMasterCranklInfo.item(9,1).text())
-        gs.errorP.Fp_Y   = float(self.tableMasterCranklInfo.item(10,1).text())
-        gs.errorP.Fp_Z   = float(self.tableMasterCranklInfo.item(11,1).text())
-        gs.errorN.Distance   = float(self.tableMasterCranklInfo.item(0,2).text())
-        gs.errorN.Delta = float(self.tableMasterCranklInfo.item(1,2).text())
-        gs.errorN.FE   = float(self.tableMasterCranklInfo.item(2,2).text())
-        gs.errorN.BC   = float(self.tableMasterCranklInfo.item(3,2).text())
-        gs.errorN.CD   = float(self.tableMasterCranklInfo.item(4,2).text())
-        gs.errorN.ED   = float(self.tableMasterCranklInfo.item(5,2).text())
-        gs.errorN.F_X   = float(self.tableMasterCranklInfo.item(6,2).text())
-        gs.errorN.F_Y   = float(self.tableMasterCranklInfo.item(7,2).text())
-        gs.errorN.F_Z   = float(self.tableMasterCranklInfo.item(8,2).text())
-        gs.errorN.Fp_X   = float(self.tableMasterCranklInfo.item(9,2).text())
-        gs.errorN.Fp_Y   = float(self.tableMasterCranklInfo.item(10,2).text())
-        gs.errorN.Fp_Z   = float(self.tableMasterCranklInfo.item(11,2).text())
+        gs.Distance   = float(self.tableMainCranklInfo.item(0,0).text())
+        gs.Delta = float(self.tableMainCranklInfo.item(1,0).text())
+        gs.FE   = float(self.tableMainCranklInfo.item(2,0).text())
+        gs.BC   = float(self.tableMainCranklInfo.item(3,0).text())
+        gs.CD   = float(self.tableMainCranklInfo.item(4,0).text())
+        gs.ED   = float(self.tableMainCranklInfo.item(5,0).text())
+        gs.F_X   = float(self.tableMainCranklInfo.item(6,0).text())
+        gs.F_Y   = float(self.tableMainCranklInfo.item(7,0).text())
+        gs.F_Z   = float(self.tableMainCranklInfo.item(8,0).text())
+        gs.Fp_X   = float(self.tableMainCranklInfo.item(9,0).text())
+        gs.Fp_Y   = float(self.tableMainCranklInfo.item(10,0).text())
+        gs.Fp_Z   = float(self.tableMainCranklInfo.item(11,0).text())
+        gs.errorP.Distance   = float(self.tableMainCranklInfo.item(0,1).text())
+        gs.errorP.Delta = float(self.tableMainCranklInfo.item(1,1).text())
+        gs.errorP.FE   = float(self.tableMainCranklInfo.item(2,1).text())
+        gs.errorP.BC   = float(self.tableMainCranklInfo.item(3,1).text())
+        gs.errorP.CD   = float(self.tableMainCranklInfo.item(4,1).text())
+        gs.errorP.ED   = float(self.tableMainCranklInfo.item(5,1).text())
+        gs.errorP.F_X   = float(self.tableMainCranklInfo.item(6,1).text())
+        gs.errorP.F_Y   = float(self.tableMainCranklInfo.item(7,1).text())
+        gs.errorP.F_Z   = float(self.tableMainCranklInfo.item(8,1).text())
+        gs.errorP.Fp_X   = float(self.tableMainCranklInfo.item(9,1).text())
+        gs.errorP.Fp_Y   = float(self.tableMainCranklInfo.item(10,1).text())
+        gs.errorP.Fp_Z   = float(self.tableMainCranklInfo.item(11,1).text())
+        gs.errorN.Distance   = float(self.tableMainCranklInfo.item(0,2).text())
+        gs.errorN.Delta = float(self.tableMainCranklInfo.item(1,2).text())
+        gs.errorN.FE   = float(self.tableMainCranklInfo.item(2,2).text())
+        gs.errorN.BC   = float(self.tableMainCranklInfo.item(3,2).text())
+        gs.errorN.CD   = float(self.tableMainCranklInfo.item(4,2).text())
+        gs.errorN.ED   = float(self.tableMainCranklInfo.item(5,2).text())
+        gs.errorN.F_X   = float(self.tableMainCranklInfo.item(6,2).text())
+        gs.errorN.F_Y   = float(self.tableMainCranklInfo.item(7,2).text())
+        gs.errorN.F_Z   = float(self.tableMainCranklInfo.item(8,2).text())
+        gs.errorN.Fp_X   = float(self.tableMainCranklInfo.item(9,2).text())
+        gs.errorN.Fp_Y   = float(self.tableMainCranklInfo.item(10,2).text())
+        gs.errorN.Fp_Z   = float(self.tableMainCranklInfo.item(11,2).text())
        
-        gs.KBEW= (self.tableMasterCrankInfo2.item(0,0).text())
+        gs.KBEW= (self.tableMainCrankInfo2.item(0,0).text())
 
         
-        gs.Distance2   = float(self.tableSlaveCrankInfo.item(0,0).text())
-        gs.Delta2 = float(self.tableSlaveCrankInfo.item(1,0).text())
-        gs.FE2   = float(self.tableSlaveCrankInfo.item(2,0).text())
-        gs.BC2   = float(self.tableSlaveCrankInfo.item(3,0).text())
-        gs.CD2   = float(self.tableSlaveCrankInfo.item(4,0).text())
-        gs.ED2   = float(self.tableSlaveCrankInfo.item(5,0).text())
-        gs.F_X2   = float(self.tableSlaveCrankInfo.item(6,0).text())
-        gs.F_Y2   = float(self.tableSlaveCrankInfo.item(7,0).text())
-        gs.F_Z2   = float(self.tableSlaveCrankInfo.item(8,0).text())
-        gs.Fp_X2   = float(self.tableSlaveCrankInfo.item(9,0).text())
-        gs.Fp_Y2   = float(self.tableSlaveCrankInfo.item(10,0).text())
-        gs.Fp_Z2   = float(self.tableSlaveCrankInfo.item(11,0).text())
-        gs.errorP.Distance2   = float(self.tableSlaveCrankInfo.item(0,1).text())
-        gs.errorP.Delta2 = float(self.tableSlaveCrankInfo.item(1,1).text())
-        gs.errorP.FE2   = float(self.tableSlaveCrankInfo.item(2,1).text())
-        gs.errorP.BC2   = float(self.tableSlaveCrankInfo.item(3,1).text())
-        gs.errorP.CD2   = float(self.tableSlaveCrankInfo.item(4,1).text())
-        gs.errorP.ED2   = float(self.tableSlaveCrankInfo.item(5,1).text())
-        gs.errorP.F_X2   = float(self.tableSlaveCrankInfo.item(6,1).text())
-        gs.errorP.F_Y2   = float(self.tableSlaveCrankInfo.item(7,1).text())
-        gs.errorP.F_Z2   = float(self.tableSlaveCrankInfo.item(8,1).text())
-        gs.errorP.Fp_X2   = float(self.tableSlaveCrankInfo.item(9,1).text())
-        gs.errorP.Fp_Y2   = float(self.tableSlaveCrankInfo.item(10,1).text())
-        gs.errorP.Fp_Z2   = float(self.tableSlaveCrankInfo.item(11,1).text())
-        gs.errorN.Distance2   = float(self.tableSlaveCrankInfo.item(0,2).text())
-        gs.errorN.Delta2 = float(self.tableSlaveCrankInfo.item(1,2).text())
-        gs.errorN.FE2   = float(self.tableSlaveCrankInfo.item(2,2).text())
-        gs.errorN.BC2   = float(self.tableSlaveCrankInfo.item(3,2).text())
-        gs.errorN.CD2   = float(self.tableSlaveCrankInfo.item(4,2).text())
-        gs.errorN.ED2   = float(self.tableSlaveCrankInfo.item(5,2).text())
-        gs.errorN.F_X2   = float(self.tableSlaveCrankInfo.item(6,2).text())
-        gs.errorN.F_Y2   = float(self.tableSlaveCrankInfo.item(7,2).text())
-        gs.errorN.F_Z2   = float(self.tableSlaveCrankInfo.item(8,2).text())
-        gs.errorN.Fp_X2   = float(self.tableSlaveCrankInfo.item(9,2).text())
-        gs.errorN.Fp_Y2   = float(self.tableSlaveCrankInfo.item(10,2).text())
-        gs.errorN.Fp_Z2   = float(self.tableSlaveCrankInfo.item(11,2).text())
-        gs.KBEW2 = (self.tableSlaveCrankInfo2.item(0,0).text())
+        gs.Distance2   = float(self.tableSubordinateCrankInfo.item(0,0).text())
+        gs.Delta2 = float(self.tableSubordinateCrankInfo.item(1,0).text())
+        gs.FE2   = float(self.tableSubordinateCrankInfo.item(2,0).text())
+        gs.BC2   = float(self.tableSubordinateCrankInfo.item(3,0).text())
+        gs.CD2   = float(self.tableSubordinateCrankInfo.item(4,0).text())
+        gs.ED2   = float(self.tableSubordinateCrankInfo.item(5,0).text())
+        gs.F_X2   = float(self.tableSubordinateCrankInfo.item(6,0).text())
+        gs.F_Y2   = float(self.tableSubordinateCrankInfo.item(7,0).text())
+        gs.F_Z2   = float(self.tableSubordinateCrankInfo.item(8,0).text())
+        gs.Fp_X2   = float(self.tableSubordinateCrankInfo.item(9,0).text())
+        gs.Fp_Y2   = float(self.tableSubordinateCrankInfo.item(10,0).text())
+        gs.Fp_Z2   = float(self.tableSubordinateCrankInfo.item(11,0).text())
+        gs.errorP.Distance2   = float(self.tableSubordinateCrankInfo.item(0,1).text())
+        gs.errorP.Delta2 = float(self.tableSubordinateCrankInfo.item(1,1).text())
+        gs.errorP.FE2   = float(self.tableSubordinateCrankInfo.item(2,1).text())
+        gs.errorP.BC2   = float(self.tableSubordinateCrankInfo.item(3,1).text())
+        gs.errorP.CD2   = float(self.tableSubordinateCrankInfo.item(4,1).text())
+        gs.errorP.ED2   = float(self.tableSubordinateCrankInfo.item(5,1).text())
+        gs.errorP.F_X2   = float(self.tableSubordinateCrankInfo.item(6,1).text())
+        gs.errorP.F_Y2   = float(self.tableSubordinateCrankInfo.item(7,1).text())
+        gs.errorP.F_Z2   = float(self.tableSubordinateCrankInfo.item(8,1).text())
+        gs.errorP.Fp_X2   = float(self.tableSubordinateCrankInfo.item(9,1).text())
+        gs.errorP.Fp_Y2   = float(self.tableSubordinateCrankInfo.item(10,1).text())
+        gs.errorP.Fp_Z2   = float(self.tableSubordinateCrankInfo.item(11,1).text())
+        gs.errorN.Distance2   = float(self.tableSubordinateCrankInfo.item(0,2).text())
+        gs.errorN.Delta2 = float(self.tableSubordinateCrankInfo.item(1,2).text())
+        gs.errorN.FE2   = float(self.tableSubordinateCrankInfo.item(2,2).text())
+        gs.errorN.BC2   = float(self.tableSubordinateCrankInfo.item(3,2).text())
+        gs.errorN.CD2   = float(self.tableSubordinateCrankInfo.item(4,2).text())
+        gs.errorN.ED2   = float(self.tableSubordinateCrankInfo.item(5,2).text())
+        gs.errorN.F_X2   = float(self.tableSubordinateCrankInfo.item(6,2).text())
+        gs.errorN.F_Y2   = float(self.tableSubordinateCrankInfo.item(7,2).text())
+        gs.errorN.F_Z2   = float(self.tableSubordinateCrankInfo.item(8,2).text())
+        gs.errorN.Fp_X2   = float(self.tableSubordinateCrankInfo.item(9,2).text())
+        gs.errorN.Fp_Y2   = float(self.tableSubordinateCrankInfo.item(10,2).text())
+        gs.errorN.Fp_Z2   = float(self.tableSubordinateCrankInfo.item(11,2).text())
+        gs.KBEW2 = (self.tableSubordinateCrankInfo2.item(0,0).text())
 
         gs.w2Target=gs.w2
         gs.w3Target=gs.w3

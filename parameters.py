@@ -111,7 +111,7 @@ class Inputs(error):
     errorN.Ap_X   =  0.
     errorN.Ap_Y   =  0.
     errorN.Ap_Z   =  0.
-    Master =  'driver side'
+    Main =  'driver side'
     w2Target          = 0.
     w3Target          = 0.
 
@@ -231,7 +231,7 @@ class Outputs():
     UWL1 = 0 # abs park angle compared with 0 angle
     UWL2 = 0 # abs park angle compared with 0 angle
         # Tolerance
-    no = 0              # which crank to be calculated, 2 means master crank ,3 means slave crank(N2 column)
+    no = 0              # which crank to be calculated, 2 means main crank ,3 means subordinate crank(N2 column)
     Parameter=[]        # list to store the paramter to be used for tolerance check(parameter column)
     kpiList = []        # list to store the value of parameter(e.g BC) when reaching the largest deviation (Dimension column)
     w2List=[]           # list to store the value of target function(e.g w2) when reaching the largest deviation(Function value column)
@@ -242,7 +242,7 @@ class Outputs():
 
 class GS(Inputs,Outputs):
     # Tolerance
-    no = 0              # which crank to be calculated, 2 means master crank ,3 means slave crank(N2 column)
+    no = 0              # which crank to be calculated, 2 means main crank ,3 means subordinate crank(N2 column)
     Parameter=[]        # list to store the paramter to be used for tolerance check(parameter column)
     kpiList = []        # list to store the value of parameter(e.g BC) when reaching the largest deviation (Dimension column)
     w2List=[]           # list to store the value of target function(e.g w2) when reaching the largest deviation(Function value column)
@@ -427,7 +427,7 @@ class GS(Inputs,Outputs):
     sheetNew = ''
     pause = False
     offsetAngle = 0.
-    Master = 'Driver Side'
+    Main = 'Driver Side'
     
     DesignPath = {'Center': [cwd+'\LinkLines\Center\Center_LinkLines_DesignTable1.xlsx', cwd+'\LinkLines\Center\Center_LinkLines_DesignTable2.xlsx'],
                 'Serial DS-PS': [cwd+'\LinkLines\Serial DS-PS\Serial_DS-PS_Linklines_DesignTable1.xlsx', cwd+'\LinkLines\Serial DS-PS\Serial_DS-PS_Linklines_DesignTable2.xlsx'],
@@ -547,7 +547,7 @@ class GS(Inputs,Outputs):
         self.excel_out=self.cwd+'\\output\\'+self.ProjectName+'Report_'+self.styleTime+'.xlsx'
 
     def printGS(self):
-        print ('----------------------------master link info-----------------------------')
+        print ('----------------------------main link info-----------------------------')
         print('CD=%.4f'% self.CDb +'\tED=%.4f'% self.EDb +'\tNYS_T1=%.4f'% self.M1NYS_Tb +'\tNYS_T2=%.4f'% self.M2NYS_Tb)
         print('NYK_T1={:.4f},  NYK_T2= {:.4f} ' .format(self.M1NYK_T,self.M2NYK_T))
         print('w2=%.4f'%self.w2optb+'\tw2Target=%.4f'%(180/math.pi*self.w2))
@@ -560,7 +560,7 @@ class GS(Inputs,Outputs):
         if self.DriveType=='Reversing':
             print('offsetAngle = {:.4f}, Reversing angle={:.4f}'.format(self.offsetAngleb,self.Alfab))
 
-        print ('----------------------------slave link info-----------------------------')
+        print ('----------------------------subordinate link info-----------------------------')
         print( 'BC2=%.4f'%self.BC2+'CD2=%.4f'% self.CD2 + '\tED2=%.4f'% self.ED2
             +'\nDelta=%.4f'%self.Delta2 +'\tD=%.4f'%self.Distance2)
         print('NYS_T1=%.4f'%self.S1NYS_T+'\tNYS_T2=%.4f'%self.S2NYS_T)
